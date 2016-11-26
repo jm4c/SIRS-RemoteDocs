@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
-import sirs.remotedocs.Library;
+import sirs.remotedocs.ClientImplementation;
 import types.Buffer_t;
 import utils.CryptoUtils;
 
@@ -24,7 +24,7 @@ public class DemoReadingNonExistentFile {
 
     public static void main(String[] args) {
         try {
-            Library c = new Library();
+            ClientImplementation c = new ClientImplementation();
             Buffer_t buffer = new Buffer_t(CryptoUtils.serialize(""));
 
             // Initializing the file system

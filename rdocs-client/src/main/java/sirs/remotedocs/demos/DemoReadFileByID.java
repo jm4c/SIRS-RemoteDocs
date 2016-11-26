@@ -4,7 +4,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
-import sirs.remotedocs.Library;
+import sirs.remotedocs.ClientImplementation;
 import types.Buffer_t;
 import utils.CryptoUtils;
 
@@ -20,8 +20,8 @@ public class DemoReadFileByID {
 
     public static void main(String[] args) {
         try {
-            Library c1 = new Library();
-            Library c2 = new Library();
+            ClientImplementation c1 = new ClientImplementation();
+            ClientImplementation c2 = new ClientImplementation();
             Buffer_t buffer = new Buffer_t(CryptoUtils.serialize(""));
             
             // Initializing the file system

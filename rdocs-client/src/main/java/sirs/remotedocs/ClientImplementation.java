@@ -18,7 +18,7 @@ import types.*;
 import utils.CryptoUtils;
 import utils.HashUtils;
 
-public class Library {
+public class ClientImplementation {
 
     private PrivateKey privateKey;
     private Pk_t publicKey;
@@ -28,7 +28,7 @@ public class Library {
 
     private List fileList;
 
-    public Library() {
+    public ClientImplementation() {
 
     }
 
@@ -99,7 +99,7 @@ public class Library {
             return server.getPKeyList();
         } catch (Exception ex) {
             final String message = "Unable to retrieve Public Key list.";
-            Logger.getLogger(Library.class.getName()).log(Level.SEVERE, message, ex);
+            Logger.getLogger(ClientImplementation.class.getName()).log(Level.SEVERE, message, ex);
             return null;
         }
     }
@@ -154,7 +154,7 @@ public class Library {
 
         } catch (Exception ex) {
             final String message = "Unable to fulfill read request.";
-            Logger.getLogger(Library.class.getName()).log(Level.SEVERE, message, ex);
+            Logger.getLogger(ClientImplementation.class.getName()).log(Level.SEVERE, message, ex);
             return -1;
         }
     }
@@ -247,7 +247,7 @@ public class Library {
 
         } catch (Exception ex) {
             final String message = "Unable to fulfill write request.";
-            Logger.getLogger(Library.class.getName()).log(Level.SEVERE, message, ex);
+            Logger.getLogger(ClientImplementation.class.getName()).log(Level.SEVERE, message, ex);
         }
     }
 }

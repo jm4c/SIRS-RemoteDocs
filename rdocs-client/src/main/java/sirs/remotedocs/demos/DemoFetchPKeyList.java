@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import sirs.remotedocs.Library;
+import sirs.remotedocs.ClientImplementation;
 import types.Id_t;
 
 /*  Demo Class used for demonstrating a client connecting to the File Server, 
@@ -19,7 +19,7 @@ public class DemoFetchPKeyList {
 
     public static void main(String[] args) {
         try {
-            Library c = new Library();
+            ClientImplementation c = new ClientImplementation();
             
             // Initializing the file system
             System.out.println("Initializing the File System...");
