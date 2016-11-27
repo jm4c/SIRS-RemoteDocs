@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,12 +29,12 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     }
 
     private boolean verifyIntegrity(PublicKeyBlock b) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
-        return CryptoUtils.verify(b.getData().getValue(), b.getPKey().getValue(), b.getSig().getValue());
+        return CryptoUtils.verify(b.getData().getValue(), b.getPKey(), b.getSig());
     }
 
     //for header block
-    private Id_t calculateBlockID(Pk_t publicKey) throws NoSuchAlgorithmException, IOException {
-        byte[] hash = HashUtils.hash(publicKey.getValue().toString(), null);
+    private Id_t calculateBlockID(PublicKey publicKey) throws NoSuchAlgorithmException, IOException {
+        byte[] hash = HashUtils.hash(publicKey.toString(), null);
         return new Id_t(hash);
     }
 
@@ -87,17 +88,17 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     }
 
     @Override
-    public Id_t put_k(Data_t data, Sig_t signature, Pk_t public_key) throws RemoteException, InvalidSignatureException {
+    public Id_t put_k(Data_t data, byte[] signature, PublicKey publicKey) throws RemoteException, InvalidSignatureException {
 
         try {
-            if (!CryptoUtils.verify(data.getValue(), public_key.getValue(), signature.getValue())) {
+            if (!CryptoUtils.verify(data.getValue(), publicKey, signature)) {
                 throw new InvalidSignatureException("Invalid signature.");
             }
             System.out.println("signature is valid");
 
-            Id_t id = calculateBlockID(public_key);
+            Id_t id = calculateBlockID(publicKey);
             System.out.println(id.getValue());
-            PublicKeyBlock b = new PublicKeyBlock(data, signature, public_key);
+            PublicKeyBlock b = new PublicKeyBlock(data, signature, publicKey);
 
             String s = id.getValue();
             new File("./files/").mkdirs();

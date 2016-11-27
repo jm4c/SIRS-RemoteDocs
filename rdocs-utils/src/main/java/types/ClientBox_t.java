@@ -18,7 +18,7 @@ public class ClientBox_t extends Type_t {
         this.keysMap = new HashMap<>();
     }
 
-    //TODO temporary placeholder for documentID
+    //TODO temporary type for documentID
     public void addDocument(Id_t documentID, PrivateKey docKey){
         permissionsMap.put(documentID.getValue(), new ArrayList<>());
         keysMap.put(documentID.getValue(), docKey);

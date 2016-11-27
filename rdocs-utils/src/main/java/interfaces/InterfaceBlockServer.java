@@ -2,6 +2,7 @@ package interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
 import java.util.List;
 import types.*;
 
@@ -16,7 +17,7 @@ public interface InterfaceBlockServer extends Remote {
 
     Data_t get(Id_t id) throws RemoteException;
 
-    Id_t put_k(Data_t data, Sig_t signature, Pk_t public_key) throws Exception;
+    Id_t put_k(Data_t data, byte[] signature, PublicKey public_key) throws Exception;
 
     Id_t put_h(Data_t data) throws RemoteException;
 

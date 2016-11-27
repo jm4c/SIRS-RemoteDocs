@@ -1,32 +1,32 @@
 package blocks;
 
 import java.io.Serializable;
+import java.security.PublicKey;
+
 import types.Data_t;
-import types.Pk_t;
-import types.Sig_t;
 
 public class PublicKeyBlock implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Pk_t blockPKey;
-    private Sig_t blockSig;
+    private PublicKey blockPKey;
+    private byte[] blockSig;
     private final Data_t blockData;
 
     public PublicKeyBlock(Data_t data) {
         this.blockData = data;
     }
 
-    public PublicKeyBlock(Data_t data, Sig_t sig, Pk_t pkey) {
+    public PublicKeyBlock(Data_t data, byte[] sig, PublicKey pkey) {
         this.blockPKey = pkey;
         this.blockSig = sig;
         this.blockData = data;
     }
 
-    public Pk_t getPKey() {
+    public PublicKey getPKey() {
         return blockPKey;
     }
 
-    public Sig_t getSig() {
+    public byte[] getSig() {
         return blockSig;
     }
 

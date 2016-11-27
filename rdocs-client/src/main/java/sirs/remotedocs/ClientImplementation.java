@@ -9,6 +9,7 @@ import java.rmi.registry.Registry;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,7 +22,7 @@ import utils.HashUtils;
 public class ClientImplementation {
 
     private PrivateKey privateKey;
-    private Pk_t publicKey;
+    private PublicKey publicKey;
     private Id_t clientID;
 
     private static InterfaceBlockServer server;
@@ -41,7 +42,7 @@ public class ClientImplementation {
     }
 
     private void setPublicKey(KeyPair kp) {
-        this.publicKey = new Pk_t(kp.getPublic());
+        this.publicKey = kp.getPublic();
     }
 
     public Id_t getClientID() {
@@ -52,7 +53,7 @@ public class ClientImplementation {
         return privateKey;
     }
 
-    private Pk_t getPublicKey() {
+    private PublicKey getPublicKey() {
         return publicKey;
     }
 
@@ -114,7 +115,7 @@ public class ClientImplementation {
         List<Id_t> emptyFileList = new ArrayList<>();
         Header_t header = new Header_t(emptyFileList);
         Data_t headerData = new Data_t(CryptoUtils.serialize(header));
-        Sig_t signature = new Sig_t(CryptoUtils.sign(headerData.getValue(), getPrivateKey()));
+        byte[] signature = CryptoUtils.sign(headerData.getValue(), getPrivateKey());
 
         Registry myReg = LocateRegistry.getRegistry("localhost");
         server = (InterfaceBlockServer) myReg.lookup("fs.Server");
@@ -207,7 +208,7 @@ public class ClientImplementation {
             Header_t header = new Header_t(newFileList);
 
             Data_t headerData = new Data_t(CryptoUtils.serialize(header));
-            Sig_t signature = new Sig_t(CryptoUtils.sign(headerData.getValue(), getPrivateKey()));
+            byte[] signature = CryptoUtils.sign(headerData.getValue(), getPrivateKey());
 
             //uploads header first to check signature
             if (!getClientID().equals(server.put_k(headerData, signature, getPublicKey()))) {
