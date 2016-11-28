@@ -1,22 +1,26 @@
 package utils;
 
 import javax.crypto.*;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.KeySpec;
 
 public class CryptoUtils {
+
+
+    public static byte[] getSalt(){
+        byte[] salt = new byte[128];
+        new SecureRandom().nextBytes(salt);
+        return salt;
+    }
 
     // Asymmetric Encryption
 
@@ -67,7 +71,7 @@ public class CryptoUtils {
 
     // Symmetric Encryption
 
-    public static SecretKey getRandomSecretKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
+    private static SecretKey getRandomSecretKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
         keyGen.init(128);
         SecretKey secretKey = keyGen.generateKey();
@@ -75,21 +79,29 @@ public class CryptoUtils {
         return secretKey;
     }
 
-    public static byte[] encrypt (SecretKey key, Object message) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
-    {
+    public static SecretKey getSecretKey(String password, byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException {
+        if(password.isEmpty())
+            return getRandomSecretKey();
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("AES");
+        KeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 128);
+
+        return factory.generateSecret(spec);
+    }
+
+    public static byte[] encrypt (SecretKey key, String initVector, Object message) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException {
         byte[] messageSerialized = serialize(message);
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
+        IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+        Cipher cipher = Cipher.getInstance("AES/CCB/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, key, iv);
         return cipher.doFinal(messageSerialized);
     }
 
-    public static Object decrypt (SecretKey key, byte[] cipherSerializedMessage) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException, IOException
-    {
-        Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, key);
+    public static Object decrypt (SecretKey key, String initVector, byte[] cipherSerializedMessage) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, ClassNotFoundException, IOException, InvalidAlgorithmParameterException {
+        IvParameterSpec iv = new IvParameterSpec(initVector.getBytes("UTF-8"));
+        Cipher cipher = Cipher.getInstance("AES/CCB/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, key, iv);
         byte[] messageSerialized = cipher.doFinal(cipherSerializedMessage);
-        Object message = deserialize(messageSerialized);
-        return message;
+        return deserialize(messageSerialized);
     }
 
 

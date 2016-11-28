@@ -11,6 +11,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import exceptions.InvalidSignatureException;
@@ -22,6 +23,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
 
     private static final long serialVersionUID = 1L;
     private final List<Id_t> headerFiles;
+
 
     public ImplementationBlockServer() throws RemoteException {
         headerFiles = new ArrayList<>();
@@ -142,6 +144,29 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
             return null;
         }
 
+    }
+
+    //TODO ----------------SIRS--------------------------------------------
+    private final HashMap<String, byte[]>  clientsSalt = new HashMap<>();
+
+    @Override
+    public byte[] usernameExists(String username) throws RemoteException {
+        if (clientsSalt.containsKey(username))
+            return clientsSalt.get(username);
+        return null;
+    }
+
+    @Override
+    public void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
+        clientsSalt.put(username, salt);
+        //TODO
+
+    }
+
+    @Override
+    public ClientBox_t getClientBox(String username) throws RemoteException {
+
+        return null;
     }
 
     @Override

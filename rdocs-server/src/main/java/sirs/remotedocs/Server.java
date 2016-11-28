@@ -21,10 +21,10 @@ public class Server {
         try {
             LocateRegistry.createRegistry(port);
             ImplementationBlockServer obj = new ImplementationBlockServer();
-            Naming.rebind("fs.Server", obj);
-            System.out.println("FileSystem.Server is ready...");
+            Naming.rebind("rdocs.Server", obj);
+            System.out.println("RemoteDocs.Server is ready...");
         } catch (Exception ex) {
-            System.out.println("FileSystem.Server exceptions: " + ex.getMessage());
+            System.out.println("RemoteDocs.Server exceptions: " + ex.getMessage());
             ex.printStackTrace();
         }
     }

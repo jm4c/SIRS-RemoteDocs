@@ -10,14 +10,15 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import types.*;
-import utils.CryptoUtils;
 import utils.HashUtils;
+
+import javax.crypto.SecretKey;
+
+import static utils.CryptoUtils.*;
 
 public class ClientImplementation {
 
@@ -106,7 +107,7 @@ public class ClientImplementation {
     }
 
     public Id_t fs_init() throws Exception {
-        KeyPair kp = CryptoUtils.setKeyPair();
+        KeyPair kp = setKeyPair();
 
         setPrivateKey(kp);
         setPublicKey(kp);
@@ -114,8 +115,8 @@ public class ClientImplementation {
         //current (empty) header file
         List<Id_t> emptyFileList = new ArrayList<>();
         Header_t header = new Header_t(emptyFileList);
-        Data_t headerData = new Data_t(CryptoUtils.serialize(header));
-        byte[] signature = CryptoUtils.sign(headerData.getValue(), getPrivateKey());
+        Data_t headerData = new Data_t(serialize(header));
+        byte[] signature = sign(headerData.getValue(), getPrivateKey());
 
         Registry myReg = LocateRegistry.getRegistry("localhost");
         server = (InterfaceBlockServer) myReg.lookup("fs.Server");
@@ -132,7 +133,7 @@ public class ClientImplementation {
             Data_t data = server.get(id);
 
             @SuppressWarnings("unchecked")
-            List<Id_t> originalFileList = ((Header_t) CryptoUtils.deserialize(data.getValue())).getValue();
+            List<Id_t> originalFileList = ((Header_t) deserialize(data.getValue())).getValue();
 
             byte[][] originalContentParts = new byte[originalFileList.size()][];
             for (int i = 0; i < originalFileList.size(); i++) {
@@ -176,7 +177,7 @@ public class ClientImplementation {
             }
             //Header file's data is always a list of other files' IDs
             @SuppressWarnings("unchecked")
-            List<Id_t> originalFileList = ((Header_t) CryptoUtils.deserialize(data.getValue())).getValue();
+            List<Id_t> originalFileList = ((Header_t) deserialize(data.getValue())).getValue();
 
             Buffer_t base;
 
@@ -207,8 +208,8 @@ public class ClientImplementation {
             
             Header_t header = new Header_t(newFileList);
 
-            Data_t headerData = new Data_t(CryptoUtils.serialize(header));
-            byte[] signature = CryptoUtils.sign(headerData.getValue(), getPrivateKey());
+            Data_t headerData = new Data_t(serialize(header));
+            byte[] signature = sign(headerData.getValue(), getPrivateKey());
 
             //uploads header first to check signature
             if (!getClientID().equals(server.put_k(headerData, signature, getPublicKey()))) {
@@ -250,5 +251,43 @@ public class ClientImplementation {
             final String message = "Unable to fulfill write request.";
             Logger.getLogger(ClientImplementation.class.getName()).log(Level.SEVERE, message, ex);
         }
+    }
+
+    //TODO TEMP sirs proj here
+
+    private String clientUsername;
+
+    public void setClientID(String username){
+        clientUsername = username;
+    }
+
+    public Id_t register(String username, String password) throws Exception {
+
+
+        Registry myReg = LocateRegistry.getRegistry("localhost");
+        server = (InterfaceBlockServer) myReg.lookup("fs.Server");
+        System.out.println(server.greeting() + "\n");
+
+        if(server.usernameExists(username).length == 0) {
+            //new ClientBox
+            ClientBox_t clientBox = new ClientBox_t(username);
+
+            //TODO make sure password is strong and find a way to use salted pw's
+
+            byte[] salt = getSalt();
+
+            //Cipher client box with symmetric key obtained
+            SecretKey clientSecretKey = getSecretKey(password, salt);
+
+            //using username as initialization vector
+            byte[] encryptedBox = encrypt(clientSecretKey,username,clientBox);
+
+            System.out.println("DATA SENT (encrypted empty box): " + clientBox.toString() + "\n");
+
+            server.storeClientBox(username, salt, encryptedBox);
+        } else{
+            System.out.println("Username already exists");
+        }
+        return getClientID();
     }
 }
