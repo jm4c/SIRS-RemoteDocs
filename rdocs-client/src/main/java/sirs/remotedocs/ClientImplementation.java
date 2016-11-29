@@ -278,6 +278,8 @@ public class ClientImplementation {
         System.out.println(server.greeting() + "\n");
     }
 
+
+    //Account's Operations
     public byte[] register(String username, String password) throws Exception {
 
         if(server.usernameExists(username)) {
@@ -335,6 +337,23 @@ public class ClientImplementation {
         setClientID("");
     }
 
+    //Document's Operations
+    public void addNewDocument(Object document){
+
+    }
+
+    public Object getDocument(String documentID, SecretKey documentKey){
+        return null;
+    }
+
+    public SecretKey updateDocument(Object document, String documentID){
+        return null;
+    }
+
+    public void removeDocument(String documentID){
+
+    }
+
     //TODO remove, just for testing
     public static void main(String[] args)  {
 
@@ -351,23 +370,9 @@ public class ClientImplementation {
 
             System.out.println(result);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NoSuchPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (IllegalBlockSizeException e) {
-            e.printStackTrace();
-        } catch (BadPaddingException e) {
-            e.printStackTrace();
-        } catch (InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
+        } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException
+                | IllegalBlockSizeException | BadPaddingException | ClassNotFoundException | InvalidKeySpecException
+                | NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
 
