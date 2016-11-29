@@ -4,18 +4,20 @@ import exceptions.IDMismatchException;
 import exceptions.NullContentException;
 import interfaces.InterfaceBlockServer;
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import types.*;
 import utils.HashUtils;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import static utils.CryptoUtils.*;
@@ -253,22 +255,32 @@ public class ClientImplementation {
         }
     }
 
-    //TODO TEMP sirs proj here
+    //TODO TEMP ---------------------SIRS-----------------------------------------------
 
     private String clientUsername;
+    private ClientBox_t clientBox;
 
     public void setClientID(String username){
         clientUsername = username;
     }
 
-    public Id_t register(String username, String password) throws Exception {
+    public void setClientBox(ClientBox_t clientBox){
+        this.clientBox = clientBox;
+    }
 
+    public ClientBox_t getClientBox(){
+        return clientBox;
+    }
 
+    public void connectToServer() throws Exception{
         Registry myReg = LocateRegistry.getRegistry("localhost");
         server = (InterfaceBlockServer) myReg.lookup("fs.Server");
         System.out.println(server.greeting() + "\n");
+    }
 
-        if(server.usernameExists(username).length == 0) {
+    public byte[] register(String username, String password) throws Exception {
+
+        if(server.usernameExists(username)) {
             //new ClientBox
             ClientBox_t clientBox = new ClientBox_t(username);
 
@@ -280,14 +292,85 @@ public class ClientImplementation {
             SecretKey clientSecretKey = getSecretKey(password, salt);
 
             //using username as initialization vector
-            byte[] encryptedBox = encrypt(clientSecretKey,username,clientBox);
+            byte[] encryptedBox = encrypt(clientSecretKey,salt,clientBox);
 
             System.out.println("DATA SENT (encrypted empty box): " + clientBox.toString() + "\n");
 
             server.storeClientBox(username, salt, encryptedBox);
+            return salt;
         } else{
             System.out.println("Username already exists");
+            return null;
         }
-        return getClientID();
     }
+
+    public ClientBox_t login (String username, String password) throws Exception{
+
+        try {
+            if(server.usernameExists(username)){
+                byte[] salt = server.getClientSalt(username);
+                SecretKey key = getSecretKey(password, salt);
+
+                //downloads encrypted box from server
+                byte[] encryptedBox = server.getClientBox(username);
+
+                //if can't decrypt the box means wrong password
+                setClientBox((ClientBox_t) decrypt(key, salt, encryptedBox));
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            System.out.println("Server is not responding.");
+
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+            System.out.println("Wrong password.");
+
+        }
+
+        return null;
+    }
+
+    public void logout(){
+        setClientBox(null);
+        setClientID("");
+    }
+
+    //TODO remove, just for testing
+    public static void main(String[] args)  {
+
+        try {
+            String test = "aaaa";
+            byte[] salt = getSalt();
+
+            SecretKey clientSecretKey = getSecretKey("test", salt);
+
+            //using username as initialization vector
+            byte[] encryptedBox = encrypt(clientSecretKey,salt,test);
+            SecretKey clientSecretKey2 = getSecretKey("test", salt);
+            String result = (String) decrypt(clientSecretKey2, salt, encryptedBox);
+
+            System.out.println(result);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }

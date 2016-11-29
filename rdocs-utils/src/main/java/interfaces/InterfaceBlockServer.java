@@ -21,10 +21,12 @@ public interface InterfaceBlockServer extends Remote {
 
     Id_t put_h(Data_t data) throws RemoteException;
 
-    byte[] usernameExists(String username) throws RemoteException;
+    boolean usernameExists(String username) throws RemoteException;
+
+    byte[] getClientSalt(String username) throws RemoteException;
 
     void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException;
 
-    ClientBox_t getClientBox(String username) throws RemoteException;
+    byte[] getClientBox(String username) throws RemoteException;
 
 }

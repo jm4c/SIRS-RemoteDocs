@@ -150,10 +150,13 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     private final HashMap<String, byte[]>  clientsSalt = new HashMap<>();
 
     @Override
-    public byte[] usernameExists(String username) throws RemoteException {
-        if (clientsSalt.containsKey(username))
-            return clientsSalt.get(username);
-        return null;
+    public boolean usernameExists(String username) throws RemoteException {
+        return clientsSalt.containsKey(username);
+    }
+
+    @Override
+    public byte[] getClientSalt(String username) throws RemoteException {
+        return clientsSalt.get(username);
     }
 
     @Override
@@ -164,7 +167,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     }
 
     @Override
-    public ClientBox_t getClientBox(String username) throws RemoteException {
+    public byte[] getClientBox(String username) throws RemoteException {
 
         return null;
     }
