@@ -18,6 +18,11 @@ import exceptions.InvalidSignatureException;
 import types.*;
 import utils.HashUtils;
 import utils.CryptoUtils;
+import javax.xml.bind.DatatypeConverter;
+
+
+import static utils.HashUtils.hash;
+import static utils.HashUtils.hashedString;
 
 public class ImplementationBlockServer extends UnicastRemoteObject implements InterfaceBlockServer {
 
@@ -36,13 +41,13 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
 
     //for header block
     private Id_t calculateBlockID(PublicKey publicKey) throws NoSuchAlgorithmException, IOException {
-        byte[] hash = HashUtils.hash(publicKey.toString(), null);
+        byte[] hash = hash(publicKey.toString(), null);
         return new Id_t(hash);
     }
 
     //for other blocks
     private Id_t calculateBlockID(Data_t data) throws NoSuchAlgorithmException, IOException {
-        byte[] hash = HashUtils.hash(data.getValue(), null);
+        byte[] hash = hash(data.getValue(), null);
 
         return new Id_t(hash);
     }
@@ -163,11 +168,35 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     public void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
         clientsSalt.put(username, salt);
         //TODO
+        try {
+            String s = hashedString(username, salt);
+            new File("./clients/").mkdirs();
+            FileOutputStream fout = new FileOutputStream("./clients/" + s + ".cbx");
+            System.out.println("Stored ClientBox for user " + username + " in:./clients/" + s + ".cbx");
+
+            ObjectOutputStream oos = new ObjectOutputStream(fout);
+            oos.writeObject(encryptedClientBox);
+            oos.close();
+
+        } catch (NoSuchAlgorithmException | IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
     @Override
     public byte[] getClientBox(String username) throws RemoteException {
+        try {
+
+            String s = hashedString(username, getClientSalt(username));
+            FileInputStream fin;
+            fin = new FileInputStream("./clients/" + s + ".cbx");
+            ObjectInputStream ois = new ObjectInputStream(fin);
+            return (byte[]) ois.readObject();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         return null;
     }

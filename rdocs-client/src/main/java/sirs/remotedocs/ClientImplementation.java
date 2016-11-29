@@ -259,6 +259,7 @@ public class ClientImplementation {
 
     private String clientUsername;
     private ClientBox_t clientBox;
+    private byte[] clientSalt;
 
     public void setClientID(String username){
         clientUsername = username;
@@ -266,6 +267,14 @@ public class ClientImplementation {
 
     public void setClientBox(ClientBox_t clientBox){
         this.clientBox = clientBox;
+    }
+
+    public void setClientSalt(byte[] clientSalt) {
+        this.clientSalt = clientSalt;
+    }
+
+    public byte[] getClientSalt() {
+        return clientSalt;
     }
 
     public ClientBox_t getClientBox(){
@@ -310,14 +319,14 @@ public class ClientImplementation {
 
         try {
             if(server.usernameExists(username)){
-                byte[] salt = server.getClientSalt(username);
-                SecretKey key = getSecretKey(password, salt);
+                setClientSalt(server.getClientSalt(username));
+                SecretKey key = getSecretKey(password, getClientSalt());
 
                 //downloads encrypted box from server
                 byte[] encryptedBox = server.getClientBox(username);
 
                 //if can't decrypt the box means wrong password
-                setClientBox((ClientBox_t) decrypt(key, salt, encryptedBox));
+                setClientBox((ClientBox_t) decrypt(key, getClientSalt(), encryptedBox));
             }
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -338,8 +347,8 @@ public class ClientImplementation {
     }
 
     //Document's Operations
-    public void addNewDocument(Object document){
-
+    public SecretKey addNewDocument(Object document, String documentID){
+        return null;
     }
 
     public Object getDocument(String documentID, SecretKey documentKey){
