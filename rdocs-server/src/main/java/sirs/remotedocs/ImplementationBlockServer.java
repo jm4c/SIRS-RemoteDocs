@@ -187,7 +187,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
         System.out.println("storing client");
 
         try {
-            String s = hashedString(username, salt);
+            String s = hashInText(username, salt);
             new File("./clients/").mkdirs();
             storeFile(encryptedClientBox,"./clients/" + s + ".cbx");
             System.out.println("Stored ClientBox for user " + username + " in:./clients/" + s + ".cbx");
@@ -201,7 +201,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     @Override
     public byte[] getClientBox(String username) throws RemoteException {
         try {
-            String s = hashedString(username, getClientSalt(username));
+            String s = hashInText(username, getClientSalt(username));
             byte[] encryptedClientBox = (byte[])getFile("./clients/" + s + ".cbx");
             return  encryptedClientBox;
 
@@ -209,6 +209,30 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
             e.printStackTrace();
         }
 
+        return null;
+    }
+
+    @Override
+    public void storeDocument(String docID, byte[] encryptedDocument) throws RemoteException {
+        try {
+            new File("./docs/").mkdirs();
+            storeFile(encryptedDocument,"./docs/" + docID + ".sdoc");
+            System.out.println("Stored doc \""+ docID+"\".");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public byte[] getDocument(String docID) throws RemoteException {
+        try {
+            return (byte[]) getFile("./docs/" + docID + ".sdoc");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 

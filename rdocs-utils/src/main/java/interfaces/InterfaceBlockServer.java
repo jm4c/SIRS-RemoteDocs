@@ -29,4 +29,8 @@ public interface InterfaceBlockServer extends Remote {
 
     byte[] getClientBox(String username) throws RemoteException;
 
+    void storeDocument(String docID, byte[] encryptedDocument) throws RemoteException;
+
+    byte[] getDocument(String docID) throws RemoteException;
+
 }
