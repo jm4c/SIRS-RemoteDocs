@@ -8,7 +8,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -16,8 +15,6 @@ import types.*;
 import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import static utils.CryptoUtils.*;
@@ -207,7 +204,7 @@ public class ClientImplementation {
             for (int i = 0; i < filesArray.length; i++) {
                 newFileList.add(new Id_t(HashUtils.hash(filesArray[i], null)));
             }
-            
+
             Header_t header = new Header_t(newFileList);
 
             Data_t headerData = new Data_t(serialize(header));
@@ -283,15 +280,15 @@ public class ClientImplementation {
 
     public void connectToServer() throws Exception{
         Registry myReg = LocateRegistry.getRegistry("localhost");
-        server = (InterfaceBlockServer) myReg.lookup("fs.Server");
+        server = (InterfaceBlockServer) myReg.lookup("rdocs.Server");
         System.out.println(server.greeting() + "\n");
     }
 
 
     //Account's Operations
-    public byte[] register(String username, String password) throws Exception {
-
-        if(server.usernameExists(username)) {
+    public void register(String username, String password) throws Exception {
+        System.out.println("Registering "+username);
+        if(!server.usernameExists(username)) {
             //new ClientBox
             ClientBox_t clientBox = new ClientBox_t(username);
 
@@ -308,15 +305,13 @@ public class ClientImplementation {
             System.out.println("DATA SENT (encrypted empty box): " + clientBox.toString() + "\n");
 
             server.storeClientBox(username, salt, encryptedBox);
-            return salt;
         } else{
             System.out.println("Username already exists");
-            return null;
         }
     }
 
-    public ClientBox_t login (String username, String password) throws Exception{
-
+    public void login (String username, String password) throws Exception{
+        System.out.println("Logging " + username);
         try {
             if(server.usernameExists(username)){
                 setClientSalt(server.getClientSalt(username));
@@ -337,8 +332,6 @@ public class ClientImplementation {
             System.out.println("Wrong password.");
 
         }
-
-        return null;
     }
 
     public void logout(){
@@ -364,26 +357,14 @@ public class ClientImplementation {
     }
 
     //TODO remove, just for testing
-    public static void main(String[] args)  {
+    public static void main(String[] args)  throws Exception{
 
-        try {
-            String test = "aaaa";
-            byte[] salt = getSalt();
-
-            SecretKey clientSecretKey = getSecretKey("test", salt);
-
-            //using username as initialization vector
-            byte[] encryptedBox = encrypt(clientSecretKey,salt,test);
-            SecretKey clientSecretKey2 = getSecretKey("test", salt);
-            String result = (String) decrypt(clientSecretKey2, salt, encryptedBox);
-
-            System.out.println(result);
-
-        } catch (IOException | InvalidAlgorithmParameterException | NoSuchPaddingException | InvalidKeyException
-                | IllegalBlockSizeException | BadPaddingException | ClassNotFoundException | InvalidKeySpecException
-                | NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
+        ClientImplementation client = new ClientImplementation();
+        client.connectToServer();
+        client.register("test","123");
+        client.login("test", "123");
+        System.out.println("list of docs:");
+        client.getClientBox().print();
 
     }
 

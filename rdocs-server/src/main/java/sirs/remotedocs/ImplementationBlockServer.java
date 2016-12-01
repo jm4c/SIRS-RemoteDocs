@@ -16,13 +16,11 @@ import java.util.List;
 
 import exceptions.InvalidSignatureException;
 import types.*;
-import utils.HashUtils;
-import utils.CryptoUtils;
-import javax.xml.bind.DatatypeConverter;
 
 
-import static utils.HashUtils.hash;
-import static utils.HashUtils.hashedString;
+import static utils.CryptoUtils.*;
+import static utils.FileUtils.*;
+import static utils.HashUtils.*;
 
 public class ImplementationBlockServer extends UnicastRemoteObject implements InterfaceBlockServer {
 
@@ -33,10 +31,28 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     public ImplementationBlockServer() throws RemoteException {
         headerFiles = new ArrayList<>();
 
+        //TODO testing loading a list of clients from file and saving it when shutting down server
+        try {
+            clientsSalt = (HashMap<String, byte[]>) deserialize((byte[]) getFile("salt"));
+            System.out.println("Client's salt found.");
+        } catch (IOException e) {
+            System.out.println("Client's salt not found. Creating new map.");
+            clientsSalt = new HashMap<>();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                storeFile(serialize(clientsSalt),"salt");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
     }
 
     private boolean verifyIntegrity(PublicKeyBlock b) throws InvalidKeyException, NoSuchAlgorithmException, SignatureException {
-        return CryptoUtils.verify(b.getData().getValue(), b.getPKey(), b.getSig());
+        return verify(b.getData().getValue(), b.getPKey(), b.getSig());
     }
 
     //for header block
@@ -98,7 +114,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     public Id_t put_k(Data_t data, byte[] signature, PublicKey publicKey) throws RemoteException, InvalidSignatureException {
 
         try {
-            if (!CryptoUtils.verify(data.getValue(), publicKey, signature)) {
+            if (!verify(data.getValue(), publicKey, signature)) {
                 throw new InvalidSignatureException("Invalid signature.");
             }
             System.out.println("signature is valid");
@@ -152,10 +168,11 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     }
 
     //TODO ----------------SIRS--------------------------------------------
-    private final HashMap<String, byte[]>  clientsSalt = new HashMap<>();
+    private HashMap<String, byte[]>  clientsSalt;
 
     @Override
     public boolean usernameExists(String username) throws RemoteException {
+        System.out.println("Checking if " + username + " exists...");
         return clientsSalt.containsKey(username);
     }
 
@@ -167,16 +184,13 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     @Override
     public void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
         clientsSalt.put(username, salt);
-        //TODO
+        System.out.println("storing client");
+
         try {
             String s = hashedString(username, salt);
             new File("./clients/").mkdirs();
-            FileOutputStream fout = new FileOutputStream("./clients/" + s + ".cbx");
+            storeFile(encryptedClientBox,"./clients/" + s + ".cbx");
             System.out.println("Stored ClientBox for user " + username + " in:./clients/" + s + ".cbx");
-
-            ObjectOutputStream oos = new ObjectOutputStream(fout);
-            oos.writeObject(encryptedClientBox);
-            oos.close();
 
         } catch (NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
@@ -187,12 +201,9 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     @Override
     public byte[] getClientBox(String username) throws RemoteException {
         try {
-
             String s = hashedString(username, getClientSalt(username));
-            FileInputStream fin;
-            fin = new FileInputStream("./clients/" + s + ".cbx");
-            ObjectInputStream ois = new ObjectInputStream(fin);
-            return (byte[]) ois.readObject();
+            byte[] encryptedClientBox = (byte[])getFile("./clients/" + s + ".cbx");
+            return  encryptedClientBox;
 
         } catch (Exception e) {
             e.printStackTrace();

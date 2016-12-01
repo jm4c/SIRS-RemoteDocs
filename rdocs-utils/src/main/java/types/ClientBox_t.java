@@ -4,6 +4,7 @@ import java.security.PrivateKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public class ClientBox_t extends Type_t {
 
@@ -19,21 +20,21 @@ public class ClientBox_t extends Type_t {
     }
 
     //TODO temporary type for documentID
-    public void addDocument(Id_t documentID, PrivateKey docKey){
-        permissionsMap.put(documentID.getValue(), new ArrayList<>());
-        keysMap.put(documentID.getValue(), docKey);
+    public void addDocument(String documentID, PrivateKey docKey){
+        permissionsMap.put(documentID, new ArrayList<>());
+        keysMap.put(documentID, docKey);
     }
 
-    public void removeDocument(Id_t documentID){
-        permissionsMap.remove(documentID.getValue());
-        keysMap.remove(documentID.getValue());
+    public void removeDocument(String documentID){
+        permissionsMap.remove(documentID);
+        keysMap.remove(documentID);
     }
 
-    public void changeDocumentKey(Id_t documentID, PrivateKey newKey){
-        keysMap.replace(documentID.getValue(), newKey);
+    public void changeDocumentKey(String documentID, PrivateKey newKey){
+        keysMap.replace(documentID, newKey);
     }
 
-    public void changePermission(Id_t documentID, String clientID, String privilege){
+    public void changePermission(String documentID, String clientID, String privilege){
         Permissions_t permission;
         switch (privilege.toLowerCase()){
             case "r":
@@ -50,11 +51,20 @@ public class ClientBox_t extends Type_t {
         //TODO share key with other user (Intermediate)
     }
 
+    public Set<String> getDocumentsSet(){
+        return keysMap.keySet();
+    }
+
 
 
 
     @Override
     public void print() {
+        if (!keysMap.isEmpty()) {
+            keysMap.forEach((docID, key) -> System.out.println(docID));
+        } else{
+            System.out.println("no documents");
+        }
     }
 
     @Override
