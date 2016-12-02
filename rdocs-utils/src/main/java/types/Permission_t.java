@@ -1,11 +1,11 @@
 package types;
 
-public class Permissions_t extends Type_t{
+public class Permission_t extends Type_t{
 
     private final String clientID;
     private final boolean canWrite; // if true Read/Write if false Read Only
 
-    public Permissions_t(String clientID, boolean writePermission) {
+    public Permission_t(String clientID, boolean writePermission) {
         this.clientID = clientID;
         this.canWrite = writePermission;
     }
@@ -16,8 +16,8 @@ public class Permissions_t extends Type_t{
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Permissions_t)) return false;
-        Permissions_t otherPermission = (Permissions_t) o;
+        if (!(o instanceof Permission_t)) return false;
+        Permission_t otherPermission = (Permission_t) o;
         return this.clientID.equals(otherPermission.getClientID()) &&
                 this.canWrite == !otherPermission.isReadOnly();
     }
@@ -28,8 +28,4 @@ public class Permissions_t extends Type_t{
 
     }
 
-    @Override
-    public byte[] getValue() {
-        return null;
-    }
 }

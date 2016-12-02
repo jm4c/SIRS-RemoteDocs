@@ -19,7 +19,6 @@ public class Data_t extends Type_t {
         System.out.println();
     }
 
-    @Override
     public byte[] getValue() {
         return value;
     }

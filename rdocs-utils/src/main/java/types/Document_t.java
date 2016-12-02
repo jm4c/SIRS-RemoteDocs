@@ -2,31 +2,16 @@ package types;
 
 public class Document_t extends Type_t {
 
-    private String docID;
-    private String title;
+    private final String docID;
+    private final String title;
+    private final String owner;
     private String content;
-    private String owner;
 
     public Document_t(String docID, String title, String owner) {
         this.docID = docID;
         this.title = title;
         this.owner = owner;
         this.content = "";
-    }
-
-
-    @Override
-    public void print() {
-        System.out.println("----Doc Info-----");
-        System.out.println("Doc ID: " + docID);
-        System.out.println("Title:  " + title);
-        System.out.println("Owner:  " + owner);
-        System.out.println("Content:\n" + content);
-    }
-
-    @Override
-    public Object getValue() {
-        return null;
     }
 
     public String getDocID() {
@@ -48,4 +33,14 @@ public class Document_t extends Type_t {
     public void setContent(String content) {
         this.content = content;
     }
+
+    @Override
+    public void print() {
+        System.out.println("----Document----");
+        System.out.println("Doc ID: " + docID);
+        System.out.println("Title:  " + title);
+        System.out.println("Owner:  " + owner);
+        System.out.println("Content:\n" + content);
+    }
+
 }

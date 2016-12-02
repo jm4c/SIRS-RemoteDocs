@@ -8,6 +8,5 @@ abstract class Type_t implements Serializable {
 
     public abstract void print();
 
-    public abstract Object getValue();
 
 }

@@ -8,6 +8,7 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.*;
+import java.security.spec.InvalidKeySpecException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,6 +16,8 @@ import types.*;
 import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import static utils.CryptoUtils.*;
@@ -30,7 +33,11 @@ public class ClientImplementation {
     private List fileList;
 
     public ClientImplementation() {
-
+        try {
+            connectToServer();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void setClientID(Id_t headerID) throws NoSuchAlgorithmException, IOException {
@@ -284,33 +291,62 @@ public class ClientImplementation {
         System.out.println(server.greeting() + "\n");
     }
 
-
-    //Account's Operations
-    public void register(String username, String password) throws Exception {
-        System.out.println("Registering "+username);
-        if(!server.usernameExists(username)) {
-            //new ClientBox
-            ClientBox_t clientBox = new ClientBox_t(username);
-
-            //TODO make sure password is strong and find a way to use salted pw's
-
-            byte[] salt = getSalt();
-
-            //Cipher client box with symmetric key obtained
-            SecretKey clientSecretKey = getSecretKey(password, salt);
-
-            //using username as initialization vector
-            byte[] encryptedBox = encrypt(clientSecretKey,salt,clientBox);
-
-            System.out.println("DATA SENT (encrypted empty box): " + clientBox.toString() + "\n");
-
-            server.storeClientBox(username, salt, encryptedBox);
-        } else{
-            System.out.println("Username already exists");
-        }
+    public boolean isConnected(){
+        return server != null;
     }
 
-    public void login (String username, String password) throws Exception{
+
+    //Account's Operations
+    public int register(String username, String password) {
+        System.out.println("user: " + username);
+        System.out.println("pw:   " + password);
+
+        if(username.length()<3 || username.length()>21){
+            System.out.println("Username must be between 4 and 20 characters long.");
+            return 2;
+        }
+
+        if(password.length()<7 || password.length()>65){
+            System.out.println("Password must be between 8 and 64 characters long.");
+            return 3;
+        }
+
+        try {
+            if(!server.usernameExists(username)) {
+                //new ClientBox
+                ClientBox_t clientBox = new ClientBox_t(username);
+
+                //TODO make sure password is strong and find a way to use salted pw's
+
+                byte[] salt = getSalt();
+
+                //Cipher client box with symmetric key obtained
+                SecretKey clientSecretKey = getSecretKey(password, salt);
+
+                //using username as initialization vector
+                byte[] encryptedBox = encrypt(clientSecretKey,salt,clientBox);
+
+                System.out.println("DATA SENT (encrypted empty box): " + clientBox.toString() + "\n");
+
+                server.storeClientBox(username, salt, encryptedBox);
+                return 0;
+            } else{
+                System.out.println("Username already exists");
+                return 1;
+            }
+        } catch (NullPointerException e){
+            e.printStackTrace();
+            System.out.println("Server is offline.");
+            return -1;
+        } catch ( InvalidKeySpecException | InvalidAlgorithmParameterException | NoSuchAlgorithmException | IOException
+                | NoSuchPaddingException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+            e.printStackTrace();
+            return -2;
+        }
+
+    }
+
+    public int login (String username, String password) throws Exception{
         System.out.println("Logging " + username);
         try {
             if(server.usernameExists(username)){
@@ -322,16 +358,21 @@ public class ClientImplementation {
 
                 //if can't decrypt the box means wrong password
                 setClientBox((ClientBox_t) decrypt(key, getClientSalt(), encryptedBox));
+                return 0;
             }
-        } catch (RemoteException e) {
+            System.out.println("Username does not exist.");
+            return 2;
+        } catch (NullPointerException| RemoteException e){
             e.printStackTrace();
-            System.out.println("Server is not responding.");
-
+            System.out.println("Server is offline.");
+            return -1;
         } catch (BadPaddingException e) {
             e.printStackTrace();
             System.out.println("Wrong password.");
-
+            return 1;
         }
+
+
     }
 
     public void logout(){

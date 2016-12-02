@@ -19,7 +19,6 @@ public class Id_t extends Type_t {
         System.out.println();
     }
 
-    @Override
     public String getValue() {
         return value;
     }
