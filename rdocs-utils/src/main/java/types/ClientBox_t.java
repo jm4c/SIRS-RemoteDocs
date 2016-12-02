@@ -6,15 +6,11 @@ import java.util.*;
 public class ClientBox_t extends Type_t {
 
     private static final long serialVersionUID = 1L;
-    private String clientID;
-    private HashMap<String, List<Permission_t>> permissionsMap; //contains all client's docs and their respective permissions
-    private HashMap<String, SecretKey> keysMap; //TODO maybe create another structure to hold both values in same hashmap? staying like this for now for simplicity
+    private String ownerID;
     private HashMap<String, DocumentInfo_t> documents;
 
-    public ClientBox_t(String clientID) {
-        this.clientID = clientID;
-        this.permissionsMap = new HashMap<>();
-        this.keysMap = new HashMap<>();
+    public ClientBox_t(String ownerID) {
+        this.ownerID = ownerID;
         this.documents = new HashMap<>();
 
     }
@@ -44,13 +40,20 @@ public class ClientBox_t extends Type_t {
                 documents.get(documentID).removePermission(clientID);
                 return;
         }
-        permissionsMap.get(documentID).add(permission);
+        documents.get(documentID).addPermission(permission);
 
         //TODO share key with other user (Intermediate)
     }
+    public SecretKey getDocumentKey(String documentID){
+        return documents.get(documentID).getKey();
+    }
 
-    public Set<String> getDocumentsSet(){
-        return keysMap.keySet();
+    public Set<String> getDocumentsIDSet(){
+        return documents.keySet();
+    }
+
+    public String getOwnerID(){
+        return ownerID;
     }
 
 
@@ -58,8 +61,8 @@ public class ClientBox_t extends Type_t {
 
     @Override
     public void print() {
-        if (!keysMap.isEmpty()) {
-            keysMap.forEach((docID, key) -> System.out.println(docID));
+        if (!documents.isEmpty()) {
+            documents.forEach((docID, key) -> System.out.println(docID));
         } else{
             System.out.println("no documents");
         }

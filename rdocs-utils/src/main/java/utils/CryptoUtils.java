@@ -47,8 +47,7 @@ public class CryptoUtils {
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.DECRYPT_MODE, key);
         byte[] messageSerialized = cipher.doFinal(cipherSerializedMessage);
-        Object message = deserialize(messageSerialized);
-        return message;
+        return deserialize(messageSerialized);
     }
 
     // Signatures
@@ -69,7 +68,7 @@ public class CryptoUtils {
 
     // Symmetric Encryption
 
-    private static SecretKey getRandomSecretKey() throws InvalidKeySpecException, NoSuchAlgorithmException {
+    public static SecretKey getRandomSecretKey() throws  NoSuchAlgorithmException {
         KeyGenerator keyGen = KeyGenerator.getInstance("AES");
         keyGen.init(128);
         return keyGen.generateKey();

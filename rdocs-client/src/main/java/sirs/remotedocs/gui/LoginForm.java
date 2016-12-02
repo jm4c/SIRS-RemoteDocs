@@ -3,8 +3,6 @@ package sirs.remotedocs.gui;
 import sirs.remotedocs.ClientImplementation;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class LoginForm extends JFrame {
 
@@ -21,7 +19,7 @@ public class LoginForm extends JFrame {
 
     public LoginForm(ClientImplementation client){
         setContentPane(loginMainPanel);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         pack();
         setVisible(true);

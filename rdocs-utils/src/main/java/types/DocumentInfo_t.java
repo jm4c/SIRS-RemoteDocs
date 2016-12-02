@@ -1,10 +1,7 @@
 package types;
 
 import javax.crypto.SecretKey;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 
 public class DocumentInfo_t extends Type_t{
 

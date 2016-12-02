@@ -11,7 +11,7 @@ public class ClientInfo_t extends Type_t{
 
     public ClientInfo_t(byte[] salt) {
         this.salt = salt;
-        this.publicKeys = new ArrayList<PublicKey>();
+        this.publicKeys = new ArrayList<>();
     }
 
     @Override

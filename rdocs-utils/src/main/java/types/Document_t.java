@@ -1,5 +1,10 @@
 package types;
 
+import utils.HashUtils;
+
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
 public class Document_t extends Type_t {
 
     private final String docID;
@@ -7,8 +12,8 @@ public class Document_t extends Type_t {
     private final String owner;
     private String content;
 
-    public Document_t(String docID, String title, String owner) {
-        this.docID = docID;
+    public Document_t(String title, String owner) throws IOException, NoSuchAlgorithmException {
+        this.docID = HashUtils.hashInText(title + "&&" + owner, null);
         this.title = title;
         this.owner = owner;
         this.content = "";

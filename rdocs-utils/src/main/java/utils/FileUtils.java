@@ -1,6 +1,8 @@
 package utils;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 public class FileUtils {
 
@@ -20,5 +22,9 @@ public class FileUtils {
         Object object = ois.readObject();
         ois.close();
         return object;
+    }
+
+    public static boolean deleteFile(String path) throws IOException {
+        return Files.deleteIfExists(Paths.get(path));
     }
 }
