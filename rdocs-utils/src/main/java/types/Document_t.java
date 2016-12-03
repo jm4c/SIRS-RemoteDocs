@@ -8,23 +8,17 @@ import java.security.NoSuchAlgorithmException;
 public class Document_t extends Type_t {
 
     private final String docID;
-    private final String title;
     private final String owner;
     private String content;
 
-    public Document_t(String title, String owner) throws IOException, NoSuchAlgorithmException {
-        this.docID = HashUtils.hashInText(title + "&&" + owner, null);
-        this.title = title;
+    public Document_t(String docID, String owner) throws IOException, NoSuchAlgorithmException {
+        this.docID = docID;
         this.owner = owner;
         this.content = "";
     }
 
     public String getDocID() {
         return docID;
-    }
-
-    public String getTitle() {
-        return title;
     }
 
     public String getOwner() {
@@ -43,7 +37,6 @@ public class Document_t extends Type_t {
     public void print() {
         System.out.println("----Document----");
         System.out.println("Doc ID: " + docID);
-        System.out.println("Title:  " + title);
         System.out.println("Owner:  " + owner);
         System.out.println("Content:\n" + content);
     }

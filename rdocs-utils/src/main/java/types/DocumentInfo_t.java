@@ -6,11 +6,13 @@ import java.util.HashMap;
 public class DocumentInfo_t extends Type_t{
 
     final private String docID;
+    final private String owner;
     private SecretKey key;
     private HashMap<String,Permission_t> permissions;
 
-    public DocumentInfo_t(String docID, SecretKey key) {
+    public DocumentInfo_t(String docID, String owner, SecretKey key) {
         this.docID = docID;
+        this.owner = owner;
         this.key = key;
         this.permissions = new HashMap<>();
     }

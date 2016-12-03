@@ -3,6 +3,8 @@ package sirs.remotedocs.gui;
 import sirs.remotedocs.ClientImplementation;
 
 import javax.swing.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class LoginForm extends JFrame {
 
@@ -22,7 +24,11 @@ public class LoginForm extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         pack();
-        setVisible(true);
+
+        if(!client.isConnected()){
+            ta_status.setText("Server is offline. Click here to try to reconnect.");
+        }
+
 
         btn_login.addActionListener(e -> {
             try {
@@ -30,6 +36,7 @@ public class LoginForm extends JFrame {
                 switch (client.login(tf_username.getText(), new String(tf_password.getPassword()))){
                     case 0:
                         //TODO open new form
+                        FormManager.switchForms(this, FormManager.startDocsList(client));
                         break;
                     case 1:
                         ta_status.setText("Wrong password.");
@@ -38,7 +45,7 @@ public class LoginForm extends JFrame {
                         ta_status.setText("Username does not exist.");
                         break;
                     case -1:
-                        ta_status.setText("Server is offline.");
+                        ta_status.setText("Server is offline. Click here to try to reconnect.");
                         client.connectToServer();
                         break;
 
@@ -70,7 +77,7 @@ public class LoginForm extends JFrame {
                         ta_status.setText("Password must be between 8 and 64 characters long.");
                         break;
                     case -1:
-                        ta_status.setText("Server is offline.");
+                        ta_status.setText("Server is offline. Click here to try to reconnect.");
                         client.connectToServer();
                         break;
 
@@ -83,6 +90,24 @@ public class LoginForm extends JFrame {
             }
         });
         btn_exit.addActionListener(e -> LoginForm.super.dispose());
+
+        ta_status.addMouseListener(new MouseAdapter() {
+            private int counter = 0;
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                if(!client.isConnected()){
+                    try {
+                        client.connectToServer();
+
+                    } catch (Exception e1) {
+                        e1.printStackTrace();
+                        counter++;
+                        ta_status.setText("Server is offline. Click here to try to reconnect. (" + counter+")");
+                    }
+                }
+            }
+        });
     }
 
     public static void main(String[] args) {

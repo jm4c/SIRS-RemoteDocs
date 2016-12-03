@@ -9,12 +9,12 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
 import types.*;
+import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.print.Doc;
 
 import static utils.CryptoUtils.*;
 
@@ -23,6 +23,7 @@ public class ClientImplementation {
     private String clientUsername;
     private ClientBox_t clientBox;
     private byte[] clientSalt;
+    private SecretKey clientKey;
 
     private static InterfaceBlockServer server;
 
@@ -59,10 +60,11 @@ public class ClientImplementation {
         return clientBox;
     }
 
-    public void connectToServer() throws Exception{
+    public boolean connectToServer() throws Exception{
         Registry myReg = LocateRegistry.getRegistry("localhost");
         server = (InterfaceBlockServer) myReg.lookup("rdocs.Server");
         System.out.println(server.greeting() + "\n");
+        return isConnected();
     }
 
 
@@ -125,13 +127,13 @@ public class ClientImplementation {
         try {
             if(server.usernameExists(username)){
                 setClientSalt(server.getClientSalt(username));
-                SecretKey key = getSecretKey(password, getClientSalt());
+                setClientKey(getSecretKey(password, getClientSalt()));
 
                 //downloads encrypted box from server
                 byte[] encryptedBox = server.getClientBox(username);
 
                 //if can't decrypt the box means wrong password
-                setClientBox((ClientBox_t) decrypt(key, getClientSalt(), encryptedBox));
+                setClientBox((ClientBox_t) decrypt(getClientKey(), getClientSalt(), encryptedBox));
                 setClientUsername(username);
                 return 0;
             }
@@ -146,30 +148,31 @@ public class ClientImplementation {
             System.out.println("Wrong password.");
             return 1;
         }
+    }
 
-
+    public void resendClientBox() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+        byte[] encryptedClientBox = encrypt(getClientKey(), getClientSalt(), getClientBox());
+        server.storeClientBox(getClientUsername(), getClientSalt(), encryptedClientBox);
     }
 
     public void logout(){
         setClientBox(null);
         setClientUsername("");
+        setClientKey(null);
     }
 
     //Document's Operations
-    public Document_t createDocument(String documentTitle){
-        try {
-            Document_t document = new Document_t(documentTitle, this.getClientUsername());
-            if(clientBox.getDocumentsIDSet().contains(document.getDocID())){
-                System.out.println("Document with same title already exists");
-                return null;
-            }
-            SecretKey key = getRandomSecretKey();
-            clientBox.addDocument(document.getDocID(), key);
-            return document;
-        } catch (NoSuchAlgorithmException | IOException e) {
-            e.printStackTrace();
+    public Document_t createDocument(String documentTitle) throws NoSuchAlgorithmException, IOException {
+        Document_t document = new Document_t(documentTitle, this.getClientUsername());
+        if(clientBox.getDocumentsIDSet().contains(document.getDocID())){
+            System.out.println("Document with same title already exists");
             return null;
         }
+        SecretKey key = getRandomSecretKey();
+        clientBox.addDocument(document.getDocID(), document.getOwner(), key);
+        uploadDocument(document);
+        return document;
+
     }
 
     public boolean renewDocumentKey(Document_t document){
@@ -189,9 +192,10 @@ public class ClientImplementation {
             }
 
             SecretKey key = getClientBox().getDocumentKey(document.getDocID());
-            clientBox.addDocument(document.getDocID(), key);
+            String hashedDocID = HashUtils.hashInText(document.getDocID() + "&&" + document.getOwner(), null);
             byte[] encryptedDocument = encrypt(key, getClientSalt(), document);
-            server.storeDocument(document.getDocID(), encryptedDocument);
+            server.storeDocument(hashedDocID, encryptedDocument);
+            resendClientBox();
             return true;
         } catch ( NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException
                 | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException | NullPointerException e) {
@@ -201,10 +205,11 @@ public class ClientImplementation {
 
     }
 
-    public Document_t downloadDocument(String documentID){
+    public Document_t downloadDocument(String documentID, String owner){
         try {
             SecretKey documentKey = getClientBox().getDocumentKey(documentID);
-            byte[] encryptedDocument = server.getDocument(documentID);
+            String hashedDocID = HashUtils.hashInText(documentID + "&&" + owner, null);
+            byte[] encryptedDocument = server.getDocument(hashedDocID);
             return (Document_t) decrypt(documentKey, getClientSalt(), encryptedDocument);
 
         } catch ( ClassNotFoundException | BadPaddingException | NoSuchAlgorithmException | InvalidAlgorithmParameterException
@@ -217,8 +222,11 @@ public class ClientImplementation {
 
     public boolean removeDocument(String documentID){
         try {
-            return server.removeDocument(documentID);
-        } catch (RemoteException e) {
+            getClientBox().removeDocument(documentID);
+            resendClientBox();
+            String hashedDocID = HashUtils.hashInText(documentID + "&&" + getClientBox().getOwnerID(), null);
+            return server.removeDocument(hashedDocID);
+        } catch (Exception e) {
             e.printStackTrace();
             return false;
         }
@@ -228,19 +236,18 @@ public class ClientImplementation {
     public static void main(String[] args)  throws Exception{
 
         ClientImplementation client = new ClientImplementation();
-        client.register("test","12345678");
-        client.login("test", "12345678");
+        client.register("Hello", "helloworld");
+        client.login("Hello", "helloworld");
         System.out.println("list of docs:");
         client.getClientBox().print();
 
         Document_t doc = client.createDocument("title example");
-        Document_t doc2 = client.createDocument("title example");
         Document_t doc3 = client.createDocument("title example 3");
         doc.setContent("example content!");
         doc3.setContent("example content 3");
 
         client.uploadDocument(doc);
-        client.uploadDocument(doc2);
+
         client.uploadDocument(doc3);
 
         doc.print();
@@ -248,13 +255,22 @@ public class ClientImplementation {
         doc3.print();
 
 
-        Document_t docServer =client.downloadDocument(doc.getDocID());
-        Document_t doc3Server =client.downloadDocument(doc.getDocID());
+        Document_t docServer =client.downloadDocument(doc.getDocID(), client.getClientUsername());
+        Document_t doc3Server =client.downloadDocument(doc.getDocID(), client.getClientUsername());
 
         docServer.print();
 
         doc3Server.print();
 
+        client.getClientBox().print();
+
     }
 
+    public SecretKey getClientKey() {
+        return clientKey;
+    }
+
+    public void setClientKey(SecretKey secretKey) {
+        this.clientKey = secretKey;
+    }
 }

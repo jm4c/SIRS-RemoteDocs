@@ -15,8 +15,8 @@ public class ClientBox_t extends Type_t {
 
     }
 
-    public void addDocument(String documentID, SecretKey docKey){
-        documents.put(documentID, new DocumentInfo_t(documentID, docKey));
+    public void addDocument(String documentID, String owner, SecretKey docKey){
+        documents.put(documentID, new DocumentInfo_t(documentID, owner, docKey));
     }
 
     public void removeDocument(String documentID){
@@ -51,6 +51,7 @@ public class ClientBox_t extends Type_t {
     public Set<String> getDocumentsIDSet(){
         return documents.keySet();
     }
+
 
     public String getOwnerID(){
         return ownerID;
