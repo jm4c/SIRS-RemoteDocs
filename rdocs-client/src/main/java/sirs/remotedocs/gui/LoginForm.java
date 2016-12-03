@@ -16,13 +16,16 @@ public class LoginForm extends JFrame {
     private JPasswordField tf_password;
     private JButton btn_exit;
     private JTextArea ta_status;
+    private FormManager formManager;
 
 
 
-    public LoginForm(ClientImplementation client){
+    public LoginForm(ClientImplementation client, FormManager formManager){
+        this.formManager = formManager;
         setContentPane(loginMainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+        setResizable(false);
         pack();
 
         if(!client.isConnected()){
@@ -35,8 +38,8 @@ public class LoginForm extends JFrame {
 
                 switch (client.login(tf_username.getText(), new String(tf_password.getPassword()))){
                     case 0:
-                        //TODO open new form
-                        FormManager.switchForms(this, FormManager.startDocsList(client));
+                        FormManager.switchForms(this, formManager.openClientBox());
+                        dispose();
                         break;
                     case 1:
                         ta_status.setText("Wrong password.");
@@ -112,7 +115,7 @@ public class LoginForm extends JFrame {
 
     public static void main(String[] args) {
         ClientImplementation client = new ClientImplementation();
-        LoginForm form = new LoginForm(client);
+        LoginForm form = new LoginForm(client, null);
 
     }
 

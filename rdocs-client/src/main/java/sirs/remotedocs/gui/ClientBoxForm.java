@@ -2,6 +2,7 @@ package sirs.remotedocs.gui;
 
 
 import sirs.remotedocs.ClientImplementation;
+import types.Document_t;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -12,7 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import static utils.MiscUtils.getStringArrayFromCollection;
 
 
-public class DocumentListForm extends  JFrame{
+public class ClientBoxForm extends  JFrame{
     private JPanel mainPanel;
     private JPanel ownDocumentsPanel;
     private JPanel sharedDocumentsPanel;
@@ -20,12 +21,14 @@ public class DocumentListForm extends  JFrame{
     private JList sharedDocsList;
     private JPanel buttonsPanel;
     private JButton newButton;
-    private JButton selectButton;
+    private JButton openButton;
     private JButton deleteButton;
     private JButton logoutButton;
     private JLabel ownDocumentsLabel;
+    private FormManager formManager;
 
-    public DocumentListForm(ClientImplementation client){
+    public ClientBoxForm(ClientImplementation client, FormManager formManager){
+        this.formManager = formManager;
         setContentPane(mainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -39,7 +42,7 @@ public class DocumentListForm extends  JFrame{
 
 
 
-        newButton.addActionListener(e -> {
+        newButton.addActionListener((ActionEvent e) -> {
             String title = (String)JOptionPane.showInputDialog(
                     this,
                     "Document title:",
@@ -49,7 +52,8 @@ public class DocumentListForm extends  JFrame{
                     null,
                     "");
             try {
-                while(client.createDocument(title)==null){
+                Document_t document = client.createDocument(title);
+                while(document==null){
                     title = (String)JOptionPane.showInputDialog(
                             this,
                             "Document title:",
@@ -58,32 +62,41 @@ public class DocumentListForm extends  JFrame{
                             null,
                             null,
                             "This title already exists.");
+                    document = client.createDocument(title);
                 }
                 ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
+                DocumentForm documentForm = formManager.openDocument(document);
 
-                //TODO open document form
 
             } catch (NoSuchAlgorithmException | IOException e1) {
                 e1.printStackTrace();
             }
 
         });
-        selectButton.addActionListener(e -> {
+        openButton.addActionListener(e -> {
             System.out.println(ownDocsList.getSelectedValue());
-            client.downloadDocument(ownDocsList.getSelectedValue(), client.getClientUsername());
+            Document_t document = client.downloadDocument(ownDocsList.getSelectedValue(), client.getClientUsername());
 
-            //TODO open document form
+            formManager.openDocument(document);
         });
         deleteButton.addActionListener(e -> {
             client.removeDocument(ownDocsList.getSelectedValue());
             ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
+        });
+        logoutButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                client.logout();
+                formManager.backToLogin();
+                dispose();
+            }
         });
     }
 
     public static void main(String[] args) throws Exception {
         ClientImplementation client = new ClientImplementation();
         client.login("Hello","helloworld");
-        DocumentListForm form = new DocumentListForm(client);
+        ClientBoxForm form = new ClientBoxForm(client, null);
         form.setVisible(true);
 
 
