@@ -1,13 +1,17 @@
 package sirs.remotedocs;
 
 import interfaces.InterfaceBlockServer;
+import types.ClientInfo_t;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Set;
 
 import static utils.CryptoUtils.deserialize;
 import static utils.CryptoUtils.serialize;
@@ -17,26 +21,25 @@ import static utils.HashUtils.hashInText;
 public class ImplementationBlockServer extends UnicastRemoteObject implements InterfaceBlockServer {
 
     private static final long serialVersionUID = 1L;
-    private HashMap<String, byte[]>  clientsSalt;
+    private HashMap<String, ClientInfo_t> clientsInfoMap;
 
 
     public ImplementationBlockServer() throws RemoteException {
 
-        //TODO testing loading a list of clients from file and saving it when shutting down server
         try {
             //noinspection unchecked
-            clientsSalt = (HashMap<String, byte[]>) deserialize((byte[]) getFile("salt"));
-            System.out.println("Client's salt found.");
+            clientsInfoMap = (HashMap<String, ClientInfo_t>) deserialize((byte[]) getFile("./server/info"));
+            System.out.println("Client's Information found.");
         } catch (IOException e) {
-            System.out.println("Client's salt not found. Creating new map.");
-            clientsSalt = new HashMap<>();
+            System.out.println("Client's information map not found. Creating new map.");
+            clientsInfoMap = new HashMap<>();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
-                storeFile(serialize(clientsSalt),"salt");
+                storeFile(serialize(clientsInfoMap),"./server/info");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -46,24 +49,39 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     @Override
     public boolean usernameExists(String username) throws RemoteException {
         System.out.println("Checking if " + username + " exists...");
-        return clientsSalt.containsKey(username);
+        return clientsInfoMap.containsKey(username);
+    }
+
+    @Override
+    public Set<String> getRegisteredUsers(){
+        return clientsInfoMap.keySet();
     }
 
     @Override
     public byte[] getClientSalt(String username) throws RemoteException {
-        return clientsSalt.get(username);
+        return clientsInfoMap.get(username).getSalt();
+    }
+
+    @Override
+    public void setClientPublicKey(String username, PublicKey key) throws RemoteException {
+        clientsInfoMap.get(username).setPublicKey(key);
+    }
+
+    @Override
+    public PublicKey getClientPublicKey(String username) throws RemoteException {
+        return clientsInfoMap.get(username).getPublicKey();
     }
 
     @Override
     public void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
-        clientsSalt.put(username, salt);
-        System.out.println("storing client");
+        clientsInfoMap.put(username, new ClientInfo_t(salt));
+        System.out.println("Storing \"" + username +"\"'s box.");
 
         try {
             String s = hashInText(username, salt);
             new File("./clients/").mkdirs();
-            storeFile(encryptedClientBox,"./clients/" + s + ".cbx");
-            System.out.println("Stored ClientBox for user " + username + " in:./clients/" + s + ".cbx");
+            storeFile(encryptedClientBox,"./server/clients/" + s + ".cbx");
+            System.out.println("Stored ClientBox for user " + username + " in:./server/clients/" + s + ".cbx");
 
         } catch (NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
@@ -87,8 +105,8 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     @Override
     public void storeDocument(String docID, byte[] encryptedDocument) throws RemoteException {
         try {
-            new File("./docs/").mkdirs();
-            storeFile(encryptedDocument,"./docs/" + docID + ".sdoc");
+            new File("./server/docs/").mkdirs();
+            storeFile(encryptedDocument,"./server/docs/" + docID + ".sdoc");
             System.out.println("Stored doc \""+ docID+"\".");
         } catch (IOException e) {
             e.printStackTrace();

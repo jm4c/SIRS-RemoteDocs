@@ -9,6 +9,7 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
 import types.*;
+import utils.FileUtils;
 import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
@@ -17,6 +18,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 
 import static utils.CryptoUtils.*;
+import static utils.FileUtils.*;
 
 public class ClientImplementation {
 
@@ -24,6 +26,7 @@ public class ClientImplementation {
     private ClientBox_t clientBox;
     private byte[] clientSalt;
     private SecretKey clientKey;
+    private KeyPair keyPair;
 
     private static InterfaceBlockServer server;
 
@@ -52,6 +55,14 @@ public class ClientImplementation {
         this.clientSalt = clientSalt;
     }
 
+    public SecretKey getClientKey() {
+        return clientKey;
+    }
+
+    public void setClientKey(SecretKey secretKey) {
+        this.clientKey = secretKey;
+    }
+
     public byte[] getClientSalt() {
         return clientSalt;
     }
@@ -60,13 +71,13 @@ public class ClientImplementation {
         return clientBox;
     }
 
+
     public boolean connectToServer() throws Exception{
         Registry myReg = LocateRegistry.getRegistry("localhost");
         server = (InterfaceBlockServer) myReg.lookup("rdocs.Server");
         System.out.println(server.greeting() + "\n");
         return isConnected();
     }
-
 
     public boolean isConnected(){
         return server != null;
@@ -175,7 +186,7 @@ public class ClientImplementation {
 
     }
 
-    public boolean renewDocumentKey(Document_t document){
+    public boolean changeDocumentKey(Document_t document){
         try {
             getClientBox().changeDocumentKey(document.getDocID(), getRandomSecretKey());
             return true;
@@ -232,6 +243,46 @@ public class ClientImplementation {
         }
     }
 
+
+    // File Sharing (user must be in trusted device)
+
+    // generates a KeyPair that is stored in the device and sends public key to server
+    public KeyPair trustCurrentDevice(){
+        try {
+            KeyPair kp = generateKeyPair();
+            byte[] encryptedKeyPair = encrypt(getClientKey(), getClientSalt(), kp);
+            storeFile(encryptedKeyPair,"./client/" + getClientUsername() + "/key.ekp");
+            server.setClientPublicKey(getClientUsername(), kp.getPublic());
+            setKeyPair(kp);
+            return kp;
+        } catch ( IOException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
+                | InvalidKeyException | BadPaddingException | InvalidAlgorithmParameterException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // for more sensible operations like trusting the device or change the password
+    public boolean doubleCheckPassword(String password){
+        try {
+            SecretKey secretKeyToCheck = getSecretKey(password, getClientSalt());
+            return secretKeyToCheck.equals(getClientKey());
+        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public PublicKey getClientPublicKey(String clientUsername){
+        try {
+            return server.getClientPublicKey(clientUsername);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
     //TODO remove, just for testing
     public static void main(String[] args)  throws Exception{
 
@@ -266,11 +317,11 @@ public class ClientImplementation {
 
     }
 
-    public SecretKey getClientKey() {
-        return clientKey;
+    public KeyPair getKeyPair() {
+        return keyPair;
     }
 
-    public void setClientKey(SecretKey secretKey) {
-        this.clientKey = secretKey;
+    public void setKeyPair(KeyPair keyPair) {
+        this.keyPair = keyPair;
     }
 }

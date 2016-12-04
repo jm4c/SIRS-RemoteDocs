@@ -1,17 +1,15 @@
 package types;
 
+
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ClientInfo_t extends Type_t{
 
     private byte[] salt;
-    private List<PublicKey> publicKeys;
+    private PublicKey publicKey;
 
     public ClientInfo_t(byte[] salt) {
         this.salt = salt;
-        this.publicKeys = new ArrayList<>();
     }
 
     @Override
@@ -29,11 +27,11 @@ public class ClientInfo_t extends Type_t{
         this.salt = salt;
     }
 
-    public List<PublicKey> getPublicKeys() {
-        return publicKeys;
+    public PublicKey getPublicKey() {
+        return publicKey;
     }
 
-    public void addPublicKey(PublicKey pk){
-        publicKeys.add(pk);
+    public void setPublicKey(PublicKey pk){
+        this.publicKey=pk;
     }
 }

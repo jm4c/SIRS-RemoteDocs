@@ -2,6 +2,8 @@ package interfaces;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.security.PublicKey;
+import java.util.Set;
 
 public interface InterfaceBlockServer extends Remote {
 
@@ -10,7 +12,13 @@ public interface InterfaceBlockServer extends Remote {
 
     boolean usernameExists(String username) throws RemoteException;
 
+    Set<String> getRegisteredUsers() throws RemoteException;
+
     byte[] getClientSalt(String username) throws RemoteException;
+
+    void setClientPublicKey (String username, PublicKey key) throws  RemoteException;
+
+    PublicKey getClientPublicKey(String username) throws RemoteException;
 
     void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException;
 

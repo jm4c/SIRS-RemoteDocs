@@ -22,7 +22,7 @@ public class CryptoUtils {
 
     // Asymmetric Encryption
 
-    public static KeyPair setKeyPair() {
+    public static KeyPair generateKeyPair() {
         try {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
             keyGen.initialize(2048);
