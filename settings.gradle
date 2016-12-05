@@ -1,0 +1,4 @@
+rootProject.name = 'remotedocs'
+include ':rdocs-utils'
+include ':rdocs-server'
+include ':rdocs-client'
