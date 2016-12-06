@@ -20,7 +20,7 @@ public class Server {
 
         try {
             LocateRegistry.createRegistry(port);
-            ImplementationBlockServer obj = new ImplementationBlockServer();
+            ImplementationServer obj = new ImplementationServer();
             Naming.rebind("rdocs.Server", obj);
             System.out.println("RemoteDocs.Server is ready...");
         } catch (Exception ex) {

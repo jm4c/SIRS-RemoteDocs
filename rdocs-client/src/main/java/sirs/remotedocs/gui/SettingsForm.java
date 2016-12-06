@@ -6,7 +6,6 @@ import javax.swing.*;
  * Created by joaod on 05-Dec-16.
  */
 public class SettingsForm extends JFrame{
-    private JCheckBox trustThisDeviceCheckBox;
     private JPanel settingsPanel;
     private JButton changePasswordButton;
 

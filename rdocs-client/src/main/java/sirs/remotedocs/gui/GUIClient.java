@@ -1,19 +1,19 @@
 package sirs.remotedocs.gui;
 
 
-import sirs.remotedocs.ClientImplementation;
+import sirs.remotedocs.ImplementationClient;
 import types.Document_t;
 
 import javax.swing.*;
 
-public class FormManager {
-    private ClientImplementation client;
+public class GUIClient {
+    private ImplementationClient client;
     private LoginForm loginForm;
     private ClientBoxForm clientBoxForm;
     private DocumentForm documentForm;
 
-    public FormManager() {
-        client= new ClientImplementation();
+    public GUIClient() {
+        client= new ImplementationClient();
         loginForm = new LoginForm(client, this);
         loginForm.setVisible(true);
     }
@@ -43,7 +43,7 @@ public class FormManager {
 
 
     public static void main(String[] args) {
-        FormManager formManager = new FormManager();
+        GUIClient formManager = new GUIClient();
     }
 
 }

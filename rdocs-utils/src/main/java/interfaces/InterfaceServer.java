@@ -5,9 +5,8 @@ import java.rmi.RemoteException;
 import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
-public interface InterfaceBlockServer extends Remote {
+public interface InterfaceServer extends Remote {
 
     //Temporary greeting method for testing
     String greeting() throws RemoteException;
@@ -16,7 +15,7 @@ public interface InterfaceBlockServer extends Remote {
 
     byte[] getClientSalt(String username) throws RemoteException;
 
-    Set<String> getRegisteredUsers() throws RemoteException;
+    String[] getRegisteredUsers() throws RemoteException;
 
     void setUserPublicKey(String username, PublicKey key) throws  RemoteException;
 

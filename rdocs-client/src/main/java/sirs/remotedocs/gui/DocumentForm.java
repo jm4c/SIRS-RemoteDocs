@@ -1,18 +1,20 @@
 package sirs.remotedocs.gui;
 
-import sirs.remotedocs.ClientImplementation;
+import sirs.remotedocs.ImplementationClient;
 import types.Document_t;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
 
 import static utils.MiscUtils.getDateFormatted;
 
 public class DocumentForm extends JFrame{
     private Document_t document;
-    private final ClientImplementation client;
-    private final FormManager formManager;
+    private final ImplementationClient client;
+    private final GUIClient formManager;
     private JTextArea textAreaContent;
     private JPanel mainPanel;
     private JTextField textFieldTitle;
@@ -24,7 +26,7 @@ public class DocumentForm extends JFrame{
     private JButton saveButton;
     private JPanel PanelButtons;
 
-    public DocumentForm(Document_t document, ClientImplementation client, FormManager formManager) {
+    public DocumentForm(Document_t document, ImplementationClient client, GUIClient formManager) {
         this.document = document;
         this.client = client;
         this.formManager = formManager;
@@ -39,16 +41,17 @@ public class DocumentForm extends JFrame{
         textFieldTitle.setText(document.getDocID());
         textFieldOwner.setText(document.getOwner());
         textFieldTimestamp.setText(getDateFormatted(document.getTimestamp()));
-
-        //TODO last editor
-        textFieldLastEditor.setText(document.getOwner());
+        textFieldLastEditor.setText(document.getLastEditor());
 
         textAreaContent.setText(document.getContent());
         saveButton.addActionListener(e -> {
             try {
-                document.setContent(textAreaContent.getText());
+                document.setContent(textAreaContent.getText(),client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
                 textFieldTimestamp.setText(getDateFormatted(document.getTimestamp()));
-            } catch (IOException | NoSuchAlgorithmException e1) {
+                textFieldLastEditor.setText(document.getLastEditor());
+
+
+            } catch (IOException | NoSuchAlgorithmException | SignatureException | InvalidKeyException e1) {
                 e1.printStackTrace();
             }
             client.uploadDocument(document);
@@ -56,6 +59,24 @@ public class DocumentForm extends JFrame{
         closeButton.addActionListener(e -> {
             dispose();
         });
+        shareButton.addActionListener(e -> {
+
+
+
+            String users[] = client.getRegisteredUsers();
+
+            JList<String> test = new JList<String>(users);
+
+
+            JOptionPane.showInputDialog(this,
+                    "Pick a printer",
+                    "Input",
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    users,
+                    "Titan");
+        });
     }
+
 
 }

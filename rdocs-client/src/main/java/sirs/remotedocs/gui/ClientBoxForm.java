@@ -1,7 +1,7 @@
 package sirs.remotedocs.gui;
 
 
-import sirs.remotedocs.ClientImplementation;
+import sirs.remotedocs.ImplementationClient;
 import types.Document_t;
 
 import javax.swing.*;
@@ -25,25 +25,14 @@ public class ClientBoxForm extends  JFrame{
     private JButton settingsButton;
     private JLabel ownDocumentsLabel;
     private JLabel sharedDocumentsLabel;
-    private FormManager formManager;
+    private GUIClient formManager;
 
-    public ClientBoxForm(ClientImplementation client, FormManager formManager){
+    public ClientBoxForm(ImplementationClient client, GUIClient formManager){
         this.formManager = formManager;
         setContentPane(mainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         pack();
-
-        if (!client.isTrustedDevice()){
-            final JOptionPane optionPane = new JOptionPane(
-                    "The only way to close this dialog is by\n"
-                            + "pressing one of the following buttons.\n"
-                            + "Do you understand?",
-                    JOptionPane.QUESTION_MESSAGE,
-                    JOptionPane.YES_NO_OPTION);
-
-
-        }
 
 
         try {
@@ -119,7 +108,7 @@ public class ClientBoxForm extends  JFrame{
     }
 
     public static void main(String[] args) throws Exception {
-        ClientImplementation client = new ClientImplementation();
+        ImplementationClient client = new ImplementationClient();
         client.login("Hello","helloworld");
         ClientBoxForm form = new ClientBoxForm(client, null);
         form.setVisible(true);

@@ -1,6 +1,11 @@
 package types;
 
+import utils.CryptoUtils;
+
 import javax.crypto.SecretKey;
+import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -8,6 +13,7 @@ public class ClientBox_t extends Type_t {
 
     private static final long serialVersionUID = 1L;
     private String ownerID;
+    private KeyPair keyPair;
     private HashMap<String, DocumentInfo_t> documents;
     private HashMap<String, DocumentInfo_t> sharedDocuments;
 
@@ -15,7 +21,35 @@ public class ClientBox_t extends Type_t {
         this.ownerID = ownerID;
         this.documents = new HashMap<>();
         this.sharedDocuments = new HashMap<>();
+        this.keyPair = CryptoUtils.generateKeyPair();
+    }
 
+    public SecretKey getDocumentKey(String documentID){
+        return documents.get(documentID).getKey();
+    }
+
+    public Set<String> getDocumentsIDSet(){
+        return documents.keySet();
+    }
+    public Set<String> getSharedDocumentsIDSet(){
+        return sharedDocuments.keySet();
+    }
+
+
+    public String getOwnerID(){
+        return ownerID;
+    }
+
+    public PrivateKey getPrivateKey() {
+        return keyPair.getPrivate();
+    }
+
+    public PublicKey getPublicKey(){
+        return keyPair.getPublic();
+    }
+
+    public DocumentInfo_t getDocumentInfo(String docID){
+        return documents.get(docID);
     }
 
     public void addDocument(String documentID, String owner, SecretKey docKey){
@@ -34,9 +68,12 @@ public class ClientBox_t extends Type_t {
         sharedDocuments.put(documentInfo.getDocID(), documentInfo);
     }
 
-    public void changePermission(String documentID, String clientID, String privilege){
+
+
+
+    public void changePermission(String documentID, String clientID, String permissionLevel){
         Permission_t permission;
-        switch (privilege.toLowerCase()){
+        switch (permissionLevel.toLowerCase()){
             case "r":
                 permission = new Permission_t(clientID, false);
                 break;
@@ -51,28 +88,6 @@ public class ClientBox_t extends Type_t {
 
         //TODO share key with other user (Intermediate)
     }
-    public SecretKey getDocumentKey(String documentID){
-        return documents.get(documentID).getKey();
-    }
-
-    public Set<String> getDocumentsIDSet(){
-        return documents.keySet();
-    }
-    public Set<String> getSharedDocumentsIDSet(){
-        return sharedDocuments.keySet();
-    }
-
-
-    public String getOwnerID(){
-        return ownerID;
-    }
-
-    public DocumentInfo_t getDocumentInfo(String docID){
-        return documents.get(docID);
-    }
-
-
-
 
     @Override
     public void print() {
@@ -83,5 +98,4 @@ public class ClientBox_t extends Type_t {
             System.out.println("no documents");
         }
     }
-
 }

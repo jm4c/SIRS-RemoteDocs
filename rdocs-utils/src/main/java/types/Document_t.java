@@ -24,11 +24,11 @@ public class Document_t extends Type_t {
     private Date timestamp;
     private boolean shared;
 
-    public Document_t(String docID, String owner) throws Exception {
+    public Document_t(String docID, String owner, PrivateKey privateKey) throws Exception {
         this.docID = docID;
         this.owner = owner;
         this.lastEditor = owner;
-        setContent("");
+        setContent("", owner, privateKey);
         this.shared = false;
     }
 
@@ -50,21 +50,14 @@ public class Document_t extends Type_t {
         return timestamp;
     }
 
-    public void setContent(String content) throws IOException, NoSuchAlgorithmException {
+    public void setContent(String content, String editor, PrivateKey privateKey) throws IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         this.content = content;
         this.contentHash = hash(content, null);
         this.timestamp = new Date();
-        this.signature = null;
+        this.signature = sign(getContentHash(), privateKey);
+
     }
 
-    //only in trusted mode
-    public void setSignedContent(String content, String editor, PrivateKey privateKey) throws IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException, NullPointerException {
-        if(privateKey==null)
-            throw new NullPointerException("Private Key can't be null when editing shared documents.");
-        setContent(content);
-        this.lastEditor = editor;
-        this.signature = sign(getContentHash(), privateKey);
-    }
 
     public byte[] getContentHash() {
         return contentHash;

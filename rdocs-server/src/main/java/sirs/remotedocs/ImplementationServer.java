@@ -1,6 +1,6 @@
 package sirs.remotedocs;
 
-import interfaces.InterfaceBlockServer;
+import interfaces.InterfaceServer;
 import types.ClientBin_t;
 import types.ClientInfo_t;
 
@@ -14,20 +14,20 @@ import java.security.PublicKey;
 import java.security.SignatureException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import static utils.CryptoUtils.*;
 import static utils.FileUtils.*;
 import static utils.HashUtils.hashInText;
+import static utils.MiscUtils.getStringArrayFromCollection;
 
-public class ImplementationBlockServer extends UnicastRemoteObject implements InterfaceBlockServer {
+public class ImplementationServer extends UnicastRemoteObject implements InterfaceServer {
 
     private static final long serialVersionUID = 1L;
     private HashMap<String, ClientInfo_t> clientsInfoMap;
     private HashMap<String, ClientBin_t> clientsBinsMap;
 
 
-    public ImplementationBlockServer() throws RemoteException {
+    public ImplementationServer() throws RemoteException {
 
         try {
             //noinspection unchecked
@@ -72,8 +72,8 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     }
 
     @Override
-    public Set<String> getRegisteredUsers(){
-        return clientsInfoMap.keySet();
+    public String[] getRegisteredUsers(){
+        return getStringArrayFromCollection(clientsInfoMap.keySet());
     }
 
     @Override
@@ -176,4 +176,5 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     public String greeting() throws RemoteException {
         return "Hello There!";
     }
+
 }

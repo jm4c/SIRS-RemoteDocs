@@ -1,6 +1,6 @@
 package sirs.remotedocs.gui;
 
-import sirs.remotedocs.ClientImplementation;
+import sirs.remotedocs.ImplementationClient;
 
 import javax.swing.*;
 
@@ -13,14 +13,14 @@ public class LoginForm extends JFrame {
     private JTextField tf_username;
     private JPasswordField tf_password;
     private JButton btn_exit;
-    private FormManager formManager;
-    private ClientImplementation client;
+    private GUIClient formManager;
+    private ImplementationClient client;
 
     //TODO card layout permissions
 
 
 
-    public LoginForm(ClientImplementation inputClient, FormManager formManager){
+    public LoginForm(ImplementationClient inputClient, GUIClient formManager){
         client = inputClient;
         this.formManager = formManager;
         setContentPane(loginMainPanel);
@@ -36,7 +36,7 @@ public class LoginForm extends JFrame {
 
                 switch (client.login(tf_username.getText(), new String(tf_password.getPassword()))){
                     case 0:
-                        FormManager.switchForms(this, formManager.openClientBox());
+                        GUIClient.switchForms(this, formManager.openClientBox());
                         dispose();
                         break;
                     case 1:
@@ -92,7 +92,7 @@ public class LoginForm extends JFrame {
                                 break;
                             case -1:
                                 JOptionPane.showMessageDialog(null,"Server is offline. Click OK to try to reconnect.");
-                                client = new ClientImplementation();
+                                client = new ImplementationClient();
                                 break;
 
                             default:
@@ -115,7 +115,7 @@ public class LoginForm extends JFrame {
     }
 
     public static void main(String[] args) {
-        ClientImplementation client = new ClientImplementation();
+        ImplementationClient client = new ImplementationClient();
         LoginForm form = new LoginForm(client, null);
         form.setVisible(true);
 

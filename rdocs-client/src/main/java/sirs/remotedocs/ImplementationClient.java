@@ -1,6 +1,6 @@
 package sirs.remotedocs;
 
-import interfaces.InterfaceBlockServer;
+import interfaces.InterfaceServer;
 import types.ClientBox_t;
 import types.DocumentInfo_t;
 import types.Document_t;
@@ -18,28 +18,24 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import static utils.CryptoUtils.*;
-import static utils.FileUtils.*;
 import static utils.HashUtils.hash;
 
-public class ClientImplementation {
+public class ImplementationClient {
 
     private String clientUsername;
     private ClientBox_t clientBox;
     private byte[] clientSalt;
     private SecretKey clientKey;
-    private KeyPair keyPair;
-    private boolean trustedDevice;
-
-    private static InterfaceBlockServer server;
 
 
-    public ClientImplementation() {
+    private static InterfaceServer server;
+
+
+    public ImplementationClient() {
         try {
             connectToServer();
-            trustedDevice=false;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,14 +47,6 @@ public class ClientImplementation {
 
     public String getClientUsername() {
         return clientUsername;
-    }
-
-    public KeyPair getKeyPair() {
-        return keyPair;
-    }
-
-    public void setKeyPair(KeyPair keyPair) {
-        this.keyPair = keyPair;
     }
 
     public void setClientBox(ClientBox_t clientBox){
@@ -88,7 +76,7 @@ public class ClientImplementation {
 
     public boolean connectToServer() throws Exception{
         Registry myReg = LocateRegistry.getRegistry("localhost");
-        server = (InterfaceBlockServer) myReg.lookup("rdocs.Server");
+        server = (InterfaceServer) myReg.lookup("rdocs.Server");
         System.out.println(server.greeting() + "\n");
         return isConnected();
     }
@@ -102,7 +90,7 @@ public class ClientImplementation {
         System.out.println("user: " + username);
         System.out.println("pw:   " + password);
 
-        //TODO fix after debugging
+        //TODO fix after debugging, minimum letters and numbers maybe?
         if(username.length()<1/*3*/ || username.length()>21){
             System.out.println("Username must be between 4 and 20 characters long.");
             return 2;
@@ -160,14 +148,8 @@ public class ClientImplementation {
                 //if can't decrypt the box means wrong password
                 setClientBox((ClientBox_t) decrypt(getClientKey(), getClientSalt(), encryptedBox));
                 setClientUsername(username);
-                String keyPairPath = "./client/" + getClientUsername() + "/key.ekp";
-                if(fileExists(keyPairPath)) {
-                    KeyPair storedKeyPair = (KeyPair) decrypt(getClientKey(), getClientSalt(), (byte[]) getFile(keyPairPath));
-                    if(storedKeyPair.getPublic().equals(server.getUserPublicKey(username))){
-                        trustedDevice = true;
-                        setKeyPair(storedKeyPair);
-                    }
-                }
+
+
                 return 0;
             }
             System.out.println("Username does not exist.");
@@ -192,12 +174,11 @@ public class ClientImplementation {
         setClientBox(null);
         setClientUsername("");
         setClientKey(null);
-        trustedDevice = false;
     }
 
     //Document's Operations
     public Document_t createDocument(String documentTitle) throws Exception {
-        Document_t document = new Document_t(documentTitle, this.getClientUsername());
+        Document_t document = new Document_t(documentTitle, this.getClientUsername(), getClientBox().getPrivateKey());
         if(clientBox.getDocumentsIDSet().contains(document.getDocID())){
             System.out.println("Document with same title already exists");
             return null;
@@ -283,27 +264,7 @@ public class ClientImplementation {
         }
     }
 
-    // File Sharing (user must be in trusted device)
-
-    // generates a KeyPair that is stored in the device and sends public key to server
-    public boolean isTrustedDevice(){
-        return trustedDevice;
-    }
-
-    public KeyPair trustCurrentDevice(){
-        try {
-            KeyPair kp = generateKeyPair();
-            byte[] encryptedKeyPair = encrypt(getClientKey(), getClientSalt(), kp);
-            storeFile(encryptedKeyPair,"./client/" + getClientUsername() + "/key.ekp");
-            server.setUserPublicKey(getClientUsername(), kp.getPublic());
-            setKeyPair(kp);
-            return kp;
-        } catch ( IOException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
-                | InvalidKeyException | BadPaddingException | InvalidAlgorithmParameterException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
+    // File Sharing
 
     // for more sensible operations like trusting the device or change the password
     public boolean doubleCheckPassword(String password){
@@ -316,16 +277,18 @@ public class ClientImplementation {
         return false;
     }
 
-    public Set<String> getRegisteredUsers(){
+    @SuppressWarnings("unchecked")
+    public String[] getRegisteredUsers(){
         try {
+
             return server.getRegisteredUsers();
-        } catch (RemoteException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return null;
     }
 
-    public PublicKey getUserPublicKey(String clientUsername){
+    private PublicKey getUserPublicKey(String clientUsername){
         try {
             return server.getUserPublicKey(clientUsername);
         } catch (RemoteException e) {
@@ -338,7 +301,7 @@ public class ClientImplementation {
 
         PublicKey clientPublicKey = getUserPublicKey(targetUser);
         byte[] encryptedDocInfo = encrypt(clientPublicKey,getClientBox().getDocumentInfo(documentID));
-        byte[] signature = sign(encryptedDocInfo, getKeyPair().getPrivate());
+        byte[] signature = sign(encryptedDocInfo, getClientBox().getPrivateKey());
         server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername(),signature);
 
     }
@@ -348,7 +311,7 @@ public class ClientImplementation {
         binDocLists.forEach((clientID, encryptedDocs) -> {
             encryptedDocs.forEach(encryptedInfoDoc -> {
                 try {
-                    DocumentInfo_t documentInfo = (DocumentInfo_t) decrypt(getKeyPair().getPrivate(), encryptedInfoDoc);
+                    DocumentInfo_t documentInfo = (DocumentInfo_t) decrypt(getClientBox().getPrivateKey(), encryptedInfoDoc);
                     getClientBox().addSharedDocument(documentInfo);
                 } catch ( NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | InvalidKeyException
                         | BadPaddingException | IOException | ClassNotFoundException e) {
@@ -362,34 +325,39 @@ public class ClientImplementation {
     //TODO remove, just for testing
     public static void main(String[] args) throws Exception{
 
-        ClientImplementation client = new ClientImplementation();
-        client.register("Hello", "helloworld");
-        client.login("Hello", "helloworld");
-        System.out.println("list of docs:");
-        client.getClientBox().print();
+        ImplementationClient client = new ImplementationClient();
+//        client.register("Hello", "helloworld");
+//        client.login("Hello", "helloworld");
+//        System.out.println("list of docs:");
+//        client.getClientBox().print();
+//
+//
+//        Document_t doc = client.createDocument("title example");
+//        Document_t doc3 = client.createDocument("title example 3");
+//        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+//        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+//
+//        client.uploadDocument(doc);
+//
+//        client.uploadDocument(doc3);
+//
+//        doc.print();
+//
+//        doc3.print();
+//
+//
+//        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername());
+//        Document_t doc3Server = client.downloadDocument(doc.getDocID(), client.getClientUsername());
+//
+//        docServer.print();
+//
+//        doc3Server.print();
+//
+//        client.getClientBox().print();
 
-        Document_t doc = client.createDocument("title example");
-        Document_t doc3 = client.createDocument("title example 3");
-        doc.setContent("example content!");
-        doc3.setContent("example content 3");
 
-        client.uploadDocument(doc);
+        client.getRegisteredUsers().toString();
 
-        client.uploadDocument(doc3);
-
-        doc.print();
-
-        doc3.print();
-
-
-        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername());
-        Document_t doc3Server = client.downloadDocument(doc.getDocID(), client.getClientUsername());
-
-        docServer.print();
-
-        doc3Server.print();
-
-        client.getClientBox().print();
 
     }
 }
