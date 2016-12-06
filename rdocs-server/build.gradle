@@ -1,0 +1,6 @@
+apply plugin: 'application'
+mainClassName = "sirs.remotedocs.Server"
+
+dependencies {
+    compile project(':rdocs-utils')
+}
