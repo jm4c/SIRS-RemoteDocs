@@ -21,6 +21,7 @@ public class DocumentInfo_t extends Type_t{
     public void print() {
         System.out.println("----DocInfo----");
         System.out.println("Doc ID: " + docID);
+        System.out.println("Owner:  " + owner);
     }
 
 

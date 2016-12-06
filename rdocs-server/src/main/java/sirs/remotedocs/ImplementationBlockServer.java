@@ -1,20 +1,22 @@
 package sirs.remotedocs;
 
 import interfaces.InterfaceBlockServer;
+import types.ClientBin_t;
 import types.ClientInfo_t;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.util.Collection;
+import java.security.SignatureException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
-import static utils.CryptoUtils.deserialize;
-import static utils.CryptoUtils.serialize;
+import static utils.CryptoUtils.*;
 import static utils.FileUtils.*;
 import static utils.HashUtils.hashInText;
 
@@ -22,6 +24,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
 
     private static final long serialVersionUID = 1L;
     private HashMap<String, ClientInfo_t> clientsInfoMap;
+    private HashMap<String, ClientBin_t> clientsBinsMap;
 
 
     public ImplementationBlockServer() throws RemoteException {
@@ -36,10 +39,21 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
+        try {
+            //noinspection unchecked
+            clientsBinsMap = (HashMap<String, ClientBin_t>) deserialize((byte[]) getFile("./server/bins"));
+            System.out.println("Client's Bins found.");
+        } catch (IOException e) {
+            System.out.println("Client's Bins map not found. Creating new map.");
+            clientsBinsMap = new HashMap<>();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             try {
                 storeFile(serialize(clientsInfoMap),"./server/info");
+                storeFile(serialize(clientsBinsMap),"./server/bins");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -53,24 +67,25 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     }
 
     @Override
-    public Set<String> getRegisteredUsers(){
-        return clientsInfoMap.keySet();
-    }
-
-    @Override
     public byte[] getClientSalt(String username) throws RemoteException {
         return clientsInfoMap.get(username).getSalt();
     }
 
     @Override
-    public void setClientPublicKey(String username, PublicKey key) throws RemoteException {
+    public Set<String> getRegisteredUsers(){
+        return clientsInfoMap.keySet();
+    }
+
+    @Override
+    public void setUserPublicKey(String username, PublicKey key) throws RemoteException {
         clientsInfoMap.get(username).setPublicKey(key);
     }
 
     @Override
-    public PublicKey getClientPublicKey(String username) throws RemoteException {
+    public PublicKey getUserPublicKey(String username) throws RemoteException {
         return clientsInfoMap.get(username).getPublicKey();
     }
+
 
     @Override
     public void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
@@ -79,9 +94,11 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
 
         try {
             String s = hashInText(username, salt);
-            new File("./clients/").mkdirs();
             storeFile(encryptedClientBox,"./server/clients/" + s + ".cbx");
             System.out.println("Stored ClientBox for user " + username + " in:./server/clients/" + s + ".cbx");
+
+            if(!clientsBinsMap.containsKey(username))
+                clientsBinsMap.put(username, new ClientBin_t(username));
 
         } catch (NoSuchAlgorithmException | IOException e) {
             e.printStackTrace();
@@ -93,7 +110,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     public byte[] getClientBox(String username) throws RemoteException {
         try {
             String s = hashInText(username, getClientSalt(username));
-            return (byte[])getFile("./clients/" + s + ".cbx");
+            return (byte[])getFile("./server/clients/" + s + ".cbx");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -117,7 +134,7 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
     @Override
     public byte[] getDocument(String docID) throws RemoteException {
         try {
-            return (byte[]) getFile("./docs/" + docID + ".sdoc");
+            return (byte[]) getFile("./server/docs/" + docID + ".sdoc");
         } catch (IOException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -136,8 +153,27 @@ public class ImplementationBlockServer extends UnicastRemoteObject implements In
 
 
     @Override
+    public boolean storeObjectInClientBin(String binOwner, byte[] encryptedDocInfo, String docOwner, byte[] docOwnerSignature) throws RemoteException{
+        try {
+            if (verify(encryptedDocInfo, getUserPublicKey(docOwner), docOwnerSignature)){
+                clientsBinsMap.get(binOwner).addDocument(docOwner, encryptedDocInfo);
+                return true;
+            }
+        } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
+    @Override
+    public HashMap<String, List<byte[]>> getBinLists(String binOwner) throws RemoteException {
+        return clientsBinsMap.get(binOwner).getLists();
+        //TODO control downloaded lists but avoid deleting lists not read yet
+    }
+
+    @Override
     public String greeting() throws RemoteException {
         return "Hello There!";
     }
-
 }

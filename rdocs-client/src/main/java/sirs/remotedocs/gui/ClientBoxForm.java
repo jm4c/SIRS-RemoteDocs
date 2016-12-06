@@ -6,9 +6,7 @@ import types.Document_t;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
+import java.rmi.RemoteException;
 
 import static utils.MiscUtils.getStringArrayFromCollection;
 
@@ -24,7 +22,9 @@ public class ClientBoxForm extends  JFrame{
     private JButton openButton;
     private JButton deleteButton;
     private JButton logoutButton;
+    private JButton settingsButton;
     private JLabel ownDocumentsLabel;
+    private JLabel sharedDocumentsLabel;
     private FormManager formManager;
 
     public ClientBoxForm(ClientImplementation client, FormManager formManager){
@@ -33,10 +33,35 @@ public class ClientBoxForm extends  JFrame{
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         pack();
+
+        if (!client.isTrustedDevice()){
+            final JOptionPane optionPane = new JOptionPane(
+                    "The only way to close this dialog is by\n"
+                            + "pressing one of the following buttons.\n"
+                            + "Do you understand?",
+                    JOptionPane.QUESTION_MESSAGE,
+                    JOptionPane.YES_NO_OPTION);
+
+
+        }
+
+
+        try {
+            //get shared documents
+            System.out.println("Check if client's bin has new shared docs");
+            client.getSharedDocuments();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+
+
         System.out.println(client.getClientBox().getDocumentsIDSet().toString());
         ownDocumentsLabel.setText(client.getClientUsername() + "\'s documents");
         ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
 
+        sharedDocumentsLabel.setText("Shared documents with " +client.getClientUsername());
+        sharedDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getSharedDocumentsIDSet()));
 
 
 
@@ -68,28 +93,28 @@ public class ClientBoxForm extends  JFrame{
                 DocumentForm documentForm = formManager.openDocument(document);
 
 
-            } catch (NoSuchAlgorithmException | IOException e1) {
+            } catch (Exception e1) {
                 e1.printStackTrace();
             }
 
         });
+
         openButton.addActionListener(e -> {
             System.out.println(ownDocsList.getSelectedValue());
             Document_t document = client.downloadDocument(ownDocsList.getSelectedValue(), client.getClientUsername());
 
             formManager.openDocument(document);
         });
+
         deleteButton.addActionListener(e -> {
             client.removeDocument(ownDocsList.getSelectedValue());
             ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
         });
-        logoutButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                client.logout();
-                formManager.backToLogin();
-                dispose();
-            }
+
+        logoutButton.addActionListener(e -> {
+            client.logout();
+            formManager.backToLogin();
+            dispose();
         });
     }
 

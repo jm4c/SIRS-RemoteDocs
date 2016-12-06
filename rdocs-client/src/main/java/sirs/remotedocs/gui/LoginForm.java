@@ -14,10 +14,14 @@ public class LoginForm extends JFrame {
     private JPasswordField tf_password;
     private JButton btn_exit;
     private FormManager formManager;
+    private ClientImplementation client;
+
+    //TODO card layout permissions
 
 
 
-    public LoginForm(ClientImplementation client, FormManager formManager){
+    public LoginForm(ClientImplementation inputClient, FormManager formManager){
+        client = inputClient;
         this.formManager = formManager;
         setContentPane(loginMainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -73,12 +77,12 @@ public class LoginForm extends JFrame {
                     if(!password.getText().equals(repeatPassword.getText())){
                         JOptionPane.showMessageDialog(null, "Passwords don't match.");
                     }else{
-                        switch (client.register(tf_username.getText(), new String(tf_password.getPassword()))){
+                        switch (client.register(username.getText(), new String(password.getText()))){
                             case 0:
-                                JOptionPane.showMessageDialog(null,tf_username.getText() + " successfully registered.");
+                                JOptionPane.showMessageDialog(null,username.getText() + " successfully registered.");
                                 break;
                             case 1:
-                                JOptionPane.showMessageDialog(null,tf_username.getText() + " already exists.");
+                                JOptionPane.showMessageDialog(null,username.getText() + " already exists.");
                                 break;
                             case 2:
                                 JOptionPane.showMessageDialog(null,"Username must be between 4 and 20 characters long.");
@@ -87,8 +91,8 @@ public class LoginForm extends JFrame {
                                 JOptionPane.showMessageDialog(null,"Password must be between 8 and 64 characters long.");
                                 break;
                             case -1:
-                                JOptionPane.showMessageDialog(null,"Server is offline. Click here to try to reconnect.");
-                                client.connectToServer();
+                                JOptionPane.showMessageDialog(null,"Server is offline. Click OK to try to reconnect.");
+                                client = new ClientImplementation();
                                 break;
 
                             default:

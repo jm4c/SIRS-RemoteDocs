@@ -3,6 +3,8 @@ package interfaces;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 public interface InterfaceBlockServer extends Remote {
@@ -12,13 +14,13 @@ public interface InterfaceBlockServer extends Remote {
 
     boolean usernameExists(String username) throws RemoteException;
 
-    Set<String> getRegisteredUsers() throws RemoteException;
-
     byte[] getClientSalt(String username) throws RemoteException;
 
-    void setClientPublicKey (String username, PublicKey key) throws  RemoteException;
+    Set<String> getRegisteredUsers() throws RemoteException;
 
-    PublicKey getClientPublicKey(String username) throws RemoteException;
+    void setUserPublicKey(String username, PublicKey key) throws  RemoteException;
+
+    PublicKey getUserPublicKey(String username) throws RemoteException;
 
     void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException;
 
@@ -29,5 +31,9 @@ public interface InterfaceBlockServer extends Remote {
     byte[] getDocument(String docID) throws RemoteException;
 
     boolean removeDocument(String docID) throws RemoteException;
+
+    boolean storeObjectInClientBin(String binOwner, byte[] encryptedDocInfo, String docOwner, byte[] docOwnerSignature) throws RemoteException;
+
+    HashMap<String, List<byte[]>> getBinLists(String binOwner) throws RemoteException;
 
 }

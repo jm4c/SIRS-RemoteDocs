@@ -7,6 +7,11 @@ import java.nio.file.Paths;
 public class FileUtils {
 
     public static void storeFile(Object file, String path) throws IOException {
+        //Find parent directory from path
+        File tmp = new File(path);
+        System.out.println(tmp.getParent());
+        new File(tmp.getParent()).mkdirs();
+
         FileOutputStream fout = new FileOutputStream(path);
 
         ObjectOutputStream oos = new ObjectOutputStream(fout);
@@ -22,6 +27,10 @@ public class FileUtils {
         Object object = ois.readObject();
         ois.close();
         return object;
+    }
+
+    public static boolean fileExists(String path){
+        return Files.exists(Paths.get(path));
     }
 
     public static boolean deleteFile(String path) throws IOException {

@@ -47,12 +47,12 @@
         <properties/>
         <border type="line"/>
         <children>
-          <component id="d7d78" class="javax.swing.JLabel">
+          <component id="d7d78" class="javax.swing.JLabel" binding="sharedDocumentsLabel">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Shared Documents"/>
+              <text value="Shared"/>
             </properties>
           </component>
           <component id="ac736" class="javax.swing.JList" binding="sharedDocsList" default-binding="true">
@@ -108,6 +108,12 @@
               <minimumSize width="73" height="32"/>
               <preferredSize width="73" height="32"/>
               <text value="Logout"/>
+            </properties>
+          </component>
+          <component id="d155d" class="javax.swing.JButton" binding="settingsButton">
+            <constraints/>
+            <properties>
+              <text value="Settings"/>
             </properties>
           </component>
         </children>

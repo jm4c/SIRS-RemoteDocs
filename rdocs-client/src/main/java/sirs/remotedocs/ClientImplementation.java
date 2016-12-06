@@ -1,24 +1,28 @@
 package sirs.remotedocs;
 
 import interfaces.InterfaceBlockServer;
-import java.io.IOException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.security.*;
-import java.security.spec.InvalidKeySpecException;
-
-import types.*;
-import utils.FileUtils;
+import types.ClientBox_t;
+import types.DocumentInfo_t;
+import types.Document_t;
 import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import java.io.IOException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.security.*;
+import java.security.spec.InvalidKeySpecException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 import static utils.CryptoUtils.*;
 import static utils.FileUtils.*;
+import static utils.HashUtils.hash;
 
 public class ClientImplementation {
 
@@ -27,6 +31,7 @@ public class ClientImplementation {
     private byte[] clientSalt;
     private SecretKey clientKey;
     private KeyPair keyPair;
+    private boolean trustedDevice;
 
     private static InterfaceBlockServer server;
 
@@ -34,6 +39,7 @@ public class ClientImplementation {
     public ClientImplementation() {
         try {
             connectToServer();
+            trustedDevice=false;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -45,6 +51,14 @@ public class ClientImplementation {
 
     public String getClientUsername() {
         return clientUsername;
+    }
+
+    public KeyPair getKeyPair() {
+        return keyPair;
+    }
+
+    public void setKeyPair(KeyPair keyPair) {
+        this.keyPair = keyPair;
     }
 
     public void setClientBox(ClientBox_t clientBox){
@@ -67,10 +81,10 @@ public class ClientImplementation {
         return clientSalt;
     }
 
+
     public ClientBox_t getClientBox(){
         return clientBox;
     }
-
 
     public boolean connectToServer() throws Exception{
         Registry myReg = LocateRegistry.getRegistry("localhost");
@@ -88,12 +102,13 @@ public class ClientImplementation {
         System.out.println("user: " + username);
         System.out.println("pw:   " + password);
 
-        if(username.length()<3 || username.length()>21){
+        //TODO fix after debugging
+        if(username.length()<1/*3*/ || username.length()>21){
             System.out.println("Username must be between 4 and 20 characters long.");
             return 2;
         }
 
-        if(password.length()<7 || password.length()>65){
+        if(password.length()</*7*/1 || password.length()>65){
             System.out.println("Password must be between 8 and 64 characters long.");
             return 3;
         }
@@ -102,8 +117,6 @@ public class ClientImplementation {
             if(!server.usernameExists(username)) {
                 //new ClientBox
                 ClientBox_t clientBox = new ClientBox_t(username);
-
-                //TODO make sure password is strong and find a way to use salted pw's
 
                 byte[] salt = getSalt();
 
@@ -142,10 +155,19 @@ public class ClientImplementation {
 
                 //downloads encrypted box from server
                 byte[] encryptedBox = server.getClientBox(username);
+                System.out.println("DATA RECEIVED (encrypted empty box): " + encryptedBox.toString() + "\n");
 
                 //if can't decrypt the box means wrong password
                 setClientBox((ClientBox_t) decrypt(getClientKey(), getClientSalt(), encryptedBox));
                 setClientUsername(username);
+                String keyPairPath = "./client/" + getClientUsername() + "/key.ekp";
+                if(fileExists(keyPairPath)) {
+                    KeyPair storedKeyPair = (KeyPair) decrypt(getClientKey(), getClientSalt(), (byte[]) getFile(keyPairPath));
+                    if(storedKeyPair.getPublic().equals(server.getUserPublicKey(username))){
+                        trustedDevice = true;
+                        setKeyPair(storedKeyPair);
+                    }
+                }
                 return 0;
             }
             System.out.println("Username does not exist.");
@@ -170,10 +192,11 @@ public class ClientImplementation {
         setClientBox(null);
         setClientUsername("");
         setClientKey(null);
+        trustedDevice = false;
     }
 
     //Document's Operations
-    public Document_t createDocument(String documentTitle) throws NoSuchAlgorithmException, IOException {
+    public Document_t createDocument(String documentTitle) throws Exception {
         Document_t document = new Document_t(documentTitle, this.getClientUsername());
         if(clientBox.getDocumentsIDSet().contains(document.getDocID())){
             System.out.println("Document with same title already exists");
@@ -221,15 +244,32 @@ public class ClientImplementation {
             SecretKey documentKey = getClientBox().getDocumentKey(documentID);
             String hashedDocID = HashUtils.hashInText(documentID + "&&" + owner, null);
             byte[] encryptedDocument = server.getDocument(hashedDocID);
-            return (Document_t) decrypt(documentKey, getClientSalt(), encryptedDocument);
+            Document_t document = (Document_t) decrypt(documentKey, getClientSalt(), encryptedDocument);
+
+            //check document integrity
+            if(!hash(document.getContent(), null).equals(document.getContentHash())){
+                //TODO throw custom exception
+            }
+
+            //verify owner's identity
+            if(document.isShared())
+                if(verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
+                    throw new SignatureException("Last editors' signature does not match");
+
+
+            return document;
 
         } catch ( ClassNotFoundException | BadPaddingException | NoSuchAlgorithmException | InvalidAlgorithmParameterException
                 | InvalidKeyException | IOException | NoSuchPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+            System.out.println();
         }
 
         return null;
     }
+
 
     public boolean removeDocument(String documentID){
         try {
@@ -243,16 +283,19 @@ public class ClientImplementation {
         }
     }
 
-
     // File Sharing (user must be in trusted device)
 
     // generates a KeyPair that is stored in the device and sends public key to server
+    public boolean isTrustedDevice(){
+        return trustedDevice;
+    }
+
     public KeyPair trustCurrentDevice(){
         try {
             KeyPair kp = generateKeyPair();
             byte[] encryptedKeyPair = encrypt(getClientKey(), getClientSalt(), kp);
             storeFile(encryptedKeyPair,"./client/" + getClientUsername() + "/key.ekp");
-            server.setClientPublicKey(getClientUsername(), kp.getPublic());
+            server.setUserPublicKey(getClientUsername(), kp.getPublic());
             setKeyPair(kp);
             return kp;
         } catch ( IOException | NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException
@@ -273,18 +316,51 @@ public class ClientImplementation {
         return false;
     }
 
-    public PublicKey getClientPublicKey(String clientUsername){
+    public Set<String> getRegisteredUsers(){
         try {
-            return server.getClientPublicKey(clientUsername);
+            return server.getRegisteredUsers();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public PublicKey getUserPublicKey(String clientUsername){
+        try {
+            return server.getUserPublicKey(clientUsername);
         } catch (RemoteException e) {
             e.printStackTrace();
             return null;
         }
     }
 
+    public void shareDocument(String documentID,String targetUser) throws NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, SignatureException {
+
+        PublicKey clientPublicKey = getUserPublicKey(targetUser);
+        byte[] encryptedDocInfo = encrypt(clientPublicKey,getClientBox().getDocumentInfo(documentID));
+        byte[] signature = sign(encryptedDocInfo, getKeyPair().getPrivate());
+        server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername(),signature);
+
+    }
+
+    public void getSharedDocuments() throws RemoteException {
+        HashMap<String, List<byte[]>> binDocLists = server.getBinLists(getClientUsername());
+        binDocLists.forEach((clientID, encryptedDocs) -> {
+            encryptedDocs.forEach(encryptedInfoDoc -> {
+                try {
+                    DocumentInfo_t documentInfo = (DocumentInfo_t) decrypt(getKeyPair().getPrivate(), encryptedInfoDoc);
+                    getClientBox().addSharedDocument(documentInfo);
+                } catch ( NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | InvalidKeyException
+                        | BadPaddingException | IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                    return;
+                }
+            });
+        });
+    }
 
     //TODO remove, just for testing
-    public static void main(String[] args)  throws Exception{
+    public static void main(String[] args) throws Exception{
 
         ClientImplementation client = new ClientImplementation();
         client.register("Hello", "helloworld");
@@ -306,8 +382,8 @@ public class ClientImplementation {
         doc3.print();
 
 
-        Document_t docServer =client.downloadDocument(doc.getDocID(), client.getClientUsername());
-        Document_t doc3Server =client.downloadDocument(doc.getDocID(), client.getClientUsername());
+        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername());
+        Document_t doc3Server = client.downloadDocument(doc.getDocID(), client.getClientUsername());
 
         docServer.print();
 
@@ -315,13 +391,5 @@ public class ClientImplementation {
 
         client.getClientBox().print();
 
-    }
-
-    public KeyPair getKeyPair() {
-        return keyPair;
-    }
-
-    public void setKeyPair(KeyPair keyPair) {
-        this.keyPair = keyPair;
     }
 }
