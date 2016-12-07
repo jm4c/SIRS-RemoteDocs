@@ -22,14 +22,12 @@ public class Document_t extends Type_t {
     private byte[] signature;
     private String lastEditor;
     private Date timestamp;
-    private boolean shared;
 
     public Document_t(String docID, String owner, PrivateKey privateKey) throws Exception {
         this.docID = docID;
         this.owner = owner;
         this.lastEditor = owner;
         setContent("", owner, privateKey);
-        this.shared = false;
     }
 
     public String getDocID() {
@@ -67,13 +65,7 @@ public class Document_t extends Type_t {
         return signature;
     }
 
-    public boolean isShared() {
-        return shared;
-    }
 
-    public void setShared(boolean shared) {
-        this.shared = shared;
-    }
 
     @Override
     public void print() {

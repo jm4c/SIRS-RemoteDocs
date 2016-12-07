@@ -60,21 +60,9 @@ public class DocumentForm extends JFrame{
             dispose();
         });
         shareButton.addActionListener(e -> {
+            ShareForm shareForm = new ShareForm(document, client);
+            shareForm.setVisible(true);
 
-
-
-            String users[] = client.getRegisteredUsers();
-
-            JList<String> test = new JList<String>(users);
-
-
-            JOptionPane.showInputDialog(this,
-                    "Pick a printer",
-                    "Input",
-                    JOptionPane.QUESTION_MESSAGE,
-                    null,
-                    users,
-                    "Titan");
         });
     }
 

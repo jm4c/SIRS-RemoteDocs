@@ -232,10 +232,9 @@ public class ImplementationClient {
                 //TODO throw custom exception
             }
 
-            //verify owner's identity
-            if(document.isShared())
-                if(verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
-                    throw new SignatureException("Last editors' signature does not match");
+            //TODO verify owner's identity
+//            if(verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
+//                throw new SignatureException("Last editors' signature does not match");
 
 
             return document;
@@ -243,9 +242,9 @@ public class ImplementationClient {
         } catch ( ClassNotFoundException | BadPaddingException | NoSuchAlgorithmException | InvalidAlgorithmParameterException
                 | InvalidKeyException | IOException | NoSuchPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
-        } catch (SignatureException e) {
-            e.printStackTrace();
-            System.out.println();
+//        } catch (SignatureException e) {
+//            e.printStackTrace();
+//            System.out.println();
         }
 
         return null;
