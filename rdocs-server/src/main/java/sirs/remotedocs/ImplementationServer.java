@@ -3,19 +3,19 @@ package sirs.remotedocs;
 import interfaces.InterfaceServer;
 import types.ClientBin_t;
 import types.ClientInfo_t;
+import types.EncryptedDocInfo_t;
 
 import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.SignatureException;
 import java.util.HashMap;
 import java.util.List;
 
-import static utils.CryptoUtils.*;
+import static utils.CryptoUtils.deserialize;
+import static utils.CryptoUtils.serialize;
 import static utils.FileUtils.*;
 import static utils.HashUtils.hashInText;
 import static utils.MiscUtils.getStringArrayFromCollection;
@@ -159,24 +159,15 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
 
 
     @Override
-    public boolean storeObjectInClientBin(String binOwner, byte[] encryptedDocInfo, String docOwner, byte[] docOwnerSignature) throws RemoteException{
+    public void storeObjectInClientBin(String binOwner, EncryptedDocInfo_t encryptedDocInfo, String docOwner) throws RemoteException{
         System.out.println("storing in " + binOwner + "'s bin.");
-        try {
-            if (verify(encryptedDocInfo, getUserPublicKey(docOwner), docOwnerSignature)){
-                clientsBinsMap.get(binOwner).addDocument(docOwner, encryptedDocInfo);
-                return true;
-            }
-        } catch (NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return false;
+        clientsBinsMap.get(binOwner).addDocument(docOwner, encryptedDocInfo);
     }
 
     @Override
-    public HashMap<String, List<byte[]>> getBinLists(String binOwner) throws RemoteException {
+    public HashMap<String, List<EncryptedDocInfo_t>> getBinLists(String binOwner) throws RemoteException {
         return clientsBinsMap.get(binOwner).getLists();
-        //TODO control downloaded lists but avoid deleting lists not read yet
+        //TODO manage downloaded lists but avoid deleting lists not read yet
     }
 
     @Override

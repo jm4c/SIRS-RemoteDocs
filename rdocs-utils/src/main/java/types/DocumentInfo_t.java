@@ -52,4 +52,8 @@ public class DocumentInfo_t extends Type_t{
     public void removePermission(String clientID){
         permissions.remove(clientID);
     }
+
+    public String getOwner() {
+        return owner;
+    }
 }

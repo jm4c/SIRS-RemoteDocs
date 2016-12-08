@@ -8,7 +8,7 @@ public class ClientBin_t extends Type_t {
 
     private static final long serialVersionUID = 1L;
     private String ownerID;
-    private HashMap<String, List<byte[]>> listsOfDocInfo;
+    private HashMap<String, List<EncryptedDocInfo_t>> listsOfDocInfo;
 
 
     public ClientBin_t(String ownerID) {
@@ -17,7 +17,7 @@ public class ClientBin_t extends Type_t {
 
     }
 
-    public void addDocument(String owner, byte[] encryptedDocInfo){
+    public void addDocument(String owner, EncryptedDocInfo_t encryptedDocInfo){
         if(!listsOfDocInfo.containsKey(owner))
             listsOfDocInfo.put(owner, new ArrayList<>());
         listsOfDocInfo.get(owner).add(encryptedDocInfo);
@@ -27,7 +27,7 @@ public class ClientBin_t extends Type_t {
         listsOfDocInfo.remove(ownerID);
     }
 
-    public HashMap<String, List<byte[]>> getLists(){
+    public HashMap<String, List<EncryptedDocInfo_t>> getLists(){
         return listsOfDocInfo;
     }
 

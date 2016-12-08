@@ -1,10 +1,7 @@
 package sirs.remotedocs;
 
 import interfaces.InterfaceServer;
-import types.ClientBox_t;
-import types.DocumentInfo_t;
-import types.Document_t;
-import types.Permission_t;
+import types.*;
 import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
@@ -302,26 +299,27 @@ public class ImplementationClient {
 
         PublicKey clientPublicKey = getUserPublicKey(targetUser);
         //TODO bug javax.crypto.IllegalBlockSizeException: Data must not be longer than 245 bytes
-        byte[] encryptedDocInfo = encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID));
-        byte[] signature = sign(encryptedDocInfo, getClientBox().getPrivateKey());
-        server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername(),signature);
+        EncryptedDocInfo_t encryptedDocInfo = new EncryptedDocInfo_t(
+                encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getDocID()),
+                encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getOwner()),
+                encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getKey()));
+        //
+        // byte[] encryptedDocInfo = encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID));
+        server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername());
 
         getClientBox().getDocumentInfo(documentID).addPermission(new Permission_t(targetUser, true));
 
     }
 
     public void getSharedDocuments() throws RemoteException {
-        HashMap<String, List<byte[]>> binDocLists = server.getBinLists(getClientUsername());
+        HashMap<String, List<EncryptedDocInfo_t>> binDocLists = server.getBinLists(getClientUsername());
         binDocLists.forEach((clientID, encryptedDocs) -> {
             encryptedDocs.forEach(encryptedInfoDoc -> {
-                try {
-                    DocumentInfo_t documentInfo = (DocumentInfo_t) decrypt(getClientBox().getPrivateKey(), encryptedInfoDoc);
-                    getClientBox().addSharedDocument(documentInfo);
-                } catch ( NoSuchAlgorithmException | NoSuchPaddingException | IllegalBlockSizeException | InvalidKeyException
-                        | BadPaddingException | IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
-                    return;
-                }
+                DocumentInfo_t documentInfo = new DocumentInfo_t(
+                        encryptedInfoDoc.getDocID(getClientBox().getPrivateKey()),
+                        encryptedInfoDoc.getOwner(getClientBox().getPrivateKey()),
+                        encryptedInfoDoc.getKey(getClientBox().getPrivateKey()));
+                getClientBox().addSharedDocument(documentInfo);
             });
         });
     }
@@ -332,7 +330,7 @@ public class ImplementationClient {
 
 
         ImplementationClient client = new ImplementationClient();
-        /*client.register("Hello", "helloworld");
+        client.register("Hello", "helloworld");
         client.login("Hello", "helloworld");
         System.out.println("list of docs:");
         client.getClientBox().print();
@@ -360,8 +358,6 @@ public class ImplementationClient {
         doc3Server.print();
 
         client.getClientBox().print();
-*/
-        client.getUserPublicKey("test").toString();
 
 
     }

@@ -1,5 +1,7 @@
 package interfaces;
 
+import types.EncryptedDocInfo_t;
+
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.security.PublicKey;
@@ -31,8 +33,8 @@ public interface InterfaceServer extends Remote {
 
     boolean removeDocument(String docID) throws RemoteException;
 
-    boolean storeObjectInClientBin(String binOwner, byte[] encryptedDocInfo, String docOwner, byte[] docOwnerSignature) throws RemoteException;
+    void storeObjectInClientBin(String binOwner, EncryptedDocInfo_t encryptedDocInfo, String docOwner) throws RemoteException;
 
-    HashMap<String, List<byte[]>> getBinLists(String binOwner) throws RemoteException;
+    HashMap<String, List<EncryptedDocInfo_t>> getBinLists(String binOwner) throws RemoteException;
 
 }
