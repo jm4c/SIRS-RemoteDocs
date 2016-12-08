@@ -78,18 +78,24 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
 
     @Override
     public void setUserPublicKey(String username, PublicKey key) throws RemoteException {
+        System.out.println("\nSET PUBLIC KEY! " + username);
+        System.out.println(key+"\n");
+
         clientsInfoMap.get(username).setPublicKey(key);
     }
 
     @Override
     public PublicKey getUserPublicKey(String username) throws RemoteException {
-        return clientsInfoMap.get(username).getPublicKey();
+        System.out.println("\nGET PUBLIC KEY! " + username);
+        PublicKey key = clientsInfoMap.get(username).getPublicKey();
+        System.out.println(key+"\n");
+        return key;
     }
 
 
     @Override
-    public void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
-        clientsInfoMap.put(username, new ClientInfo_t(salt));
+    public void storeClientBox(String username, PublicKey publicKey, byte[] salt, byte[] encryptedClientBox) throws RemoteException {
+        clientsInfoMap.put(username, new ClientInfo_t(salt, publicKey));
         System.out.println("Storing \"" + username +"\"'s box.");
 
         try {
@@ -154,6 +160,7 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
 
     @Override
     public boolean storeObjectInClientBin(String binOwner, byte[] encryptedDocInfo, String docOwner, byte[] docOwnerSignature) throws RemoteException{
+        System.out.println("storing in " + binOwner + "'s bin.");
         try {
             if (verify(encryptedDocInfo, getUserPublicKey(docOwner), docOwnerSignature)){
                 clientsBinsMap.get(binOwner).addDocument(docOwner, encryptedDocInfo);

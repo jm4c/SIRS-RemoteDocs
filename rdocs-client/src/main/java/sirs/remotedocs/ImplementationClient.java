@@ -4,6 +4,7 @@ import interfaces.InterfaceServer;
 import types.ClientBox_t;
 import types.DocumentInfo_t;
 import types.Document_t;
+import types.Permission_t;
 import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
@@ -116,7 +117,8 @@ public class ImplementationClient {
 
                 System.out.println("DATA SENT (encrypted empty box): " + clientBox.toString() + "\n");
 
-                server.storeClientBox(username, salt, encryptedBox);
+                server.storeClientBox(username, clientBox.getPublicKey(), salt, encryptedBox);
+
                 return 0;
             } else{
                 System.out.println("Username already exists");
@@ -167,7 +169,7 @@ public class ImplementationClient {
 
     public void resendClientBox() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
         byte[] encryptedClientBox = encrypt(getClientKey(), getClientSalt(), getClientBox());
-        server.storeClientBox(getClientUsername(), getClientSalt(), encryptedClientBox);
+        server.storeClientBox(getClientUsername(), getClientBox().getPublicKey(), getClientSalt(), encryptedClientBox);
     }
 
     public void logout(){
@@ -299,9 +301,12 @@ public class ImplementationClient {
     public void shareDocument(String documentID,String targetUser) throws NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, SignatureException {
 
         PublicKey clientPublicKey = getUserPublicKey(targetUser);
-        byte[] encryptedDocInfo = encrypt(clientPublicKey,getClientBox().getDocumentInfo(documentID));
+        //TODO bug javax.crypto.IllegalBlockSizeException: Data must not be longer than 245 bytes
+        byte[] encryptedDocInfo = encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID));
         byte[] signature = sign(encryptedDocInfo, getClientBox().getPrivateKey());
         server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername(),signature);
+
+        getClientBox().getDocumentInfo(documentID).addPermission(new Permission_t(targetUser, true));
 
     }
 
@@ -324,38 +329,39 @@ public class ImplementationClient {
     //TODO remove, just for testing
     public static void main(String[] args) throws Exception{
 
+
+
         ImplementationClient client = new ImplementationClient();
-//        client.register("Hello", "helloworld");
-//        client.login("Hello", "helloworld");
-//        System.out.println("list of docs:");
-//        client.getClientBox().print();
-//
-//
-//        Document_t doc = client.createDocument("title example");
-//        Document_t doc3 = client.createDocument("title example 3");
-//        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-//        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-//
-//        client.uploadDocument(doc);
-//
-//        client.uploadDocument(doc3);
-//
-//        doc.print();
-//
-//        doc3.print();
-//
-//
-//        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername());
-//        Document_t doc3Server = client.downloadDocument(doc.getDocID(), client.getClientUsername());
-//
-//        docServer.print();
-//
-//        doc3Server.print();
-//
-//        client.getClientBox().print();
+        /*client.register("Hello", "helloworld");
+        client.login("Hello", "helloworld");
+        System.out.println("list of docs:");
+        client.getClientBox().print();
 
 
-        client.getRegisteredUsers().toString();
+        Document_t doc = client.createDocument("title example");
+        Document_t doc3 = client.createDocument("title example 3");
+        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+
+        client.uploadDocument(doc);
+
+        client.uploadDocument(doc3);
+
+        doc.print();
+
+        doc3.print();
+
+
+        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername());
+        Document_t doc3Server = client.downloadDocument(doc.getDocID(), client.getClientUsername());
+
+        docServer.print();
+
+        doc3Server.print();
+
+        client.getClientBox().print();
+*/
+        client.getUserPublicKey("test").toString();
 
 
     }

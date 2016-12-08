@@ -8,8 +8,9 @@ public class ClientInfo_t extends Type_t{
     private byte[] salt;
     private PublicKey publicKey;
 
-    public ClientInfo_t(byte[] salt) {
+    public ClientInfo_t(byte[] salt, PublicKey publicKey) {
         this.salt = salt;
+        setPublicKey(publicKey);
     }
 
     @Override

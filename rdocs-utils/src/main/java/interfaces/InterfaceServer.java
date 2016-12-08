@@ -21,7 +21,7 @@ public interface InterfaceServer extends Remote {
 
     PublicKey getUserPublicKey(String username) throws RemoteException;
 
-    void storeClientBox(String username, byte[] salt, byte[] encryptedClientBox) throws RemoteException;
+    void storeClientBox(String username, PublicKey publicKey, byte[] salt, byte[] encryptedClientBox) throws RemoteException;
 
     byte[] getClientBox(String username) throws RemoteException;
 
