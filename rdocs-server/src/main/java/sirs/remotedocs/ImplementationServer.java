@@ -150,7 +150,7 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
     @Override
     public boolean removeDocument(String docID) throws RemoteException {
         try {
-            return deleteFile("./docs/"+docID+".sdoc");
+            return deleteFile("./server/docs/"+docID+".sdoc");
         } catch (IOException e) {
             e.printStackTrace();
             return false;

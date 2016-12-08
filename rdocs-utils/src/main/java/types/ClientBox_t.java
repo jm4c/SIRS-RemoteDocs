@@ -27,6 +27,9 @@ public class ClientBox_t extends Type_t {
     public SecretKey getDocumentKey(String documentID){
         return documents.get(documentID).getKey();
     }
+    public SecretKey getSharedDocumentKey(String documentID){
+        return sharedDocuments.get(documentID).getKey();
+    }
 
     public Set<String> getDocumentsIDSet(){
         return documents.keySet();
@@ -50,6 +53,10 @@ public class ClientBox_t extends Type_t {
 
     public DocumentInfo_t getDocumentInfo(String docID){
         return documents.get(docID);
+    }
+
+    public DocumentInfo_t getSharedDocumentInfo(String docID){
+        return sharedDocuments.get(docID);
     }
 
     public void addDocument(String documentID, String owner, SecretKey docKey){
@@ -85,15 +92,20 @@ public class ClientBox_t extends Type_t {
                 return;
         }
         documents.get(documentID).addPermission(permission);
-
-        //TODO share key with other user (Intermediate)
     }
 
     @Override
     public void print() {
-        System.out.println("Documents in " + getOwnerID() + "'s box:");
+        System.out.println("\n-----" + getOwnerID() + "'s Client Box------");
+        System.out.println("-" + getOwnerID() + "'s docs:");
         if (!documents.isEmpty()) {
             documents.forEach((docID, key) -> System.out.println(docID));
+        } else{
+            System.out.println("no documents");
+        }
+        System.out.println("\n-Shared docs:");
+        if (!sharedDocuments.isEmpty()) {
+            sharedDocuments.forEach((docID, key) -> System.out.println(docID));
         } else{
             System.out.println("no documents");
         }

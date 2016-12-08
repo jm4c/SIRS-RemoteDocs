@@ -87,6 +87,8 @@ public class ShareForm extends JFrame{
                 });
                 System.out.println("------------END SAVE BUTTON------------------\n");
 
+                dispose();
+
             }
         });
         cancelButton.addActionListener(e -> {

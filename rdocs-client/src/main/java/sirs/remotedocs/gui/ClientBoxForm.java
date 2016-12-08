@@ -13,16 +13,16 @@ import static utils.MiscUtils.getStringArrayFromCollection;
 
 public class ClientBoxForm extends  JFrame{
     private JPanel mainPanel;
-    private JPanel ownDocumentsPanel;
-    private JPanel sharedDocumentsPanel;
     private JList<String> ownDocsList;
-    private JList sharedDocsList;
+    private JList<String> sharedDocsList;
     private JPanel buttonsPanel;
     private JButton newButton;
     private JButton openButton;
     private JButton deleteButton;
     private JButton logoutButton;
     private JButton settingsButton;
+    private JScrollPane ownListScrollPane;
+    private JScrollPane sharedListScrollPane;
     private JLabel ownDocumentsLabel;
     private JLabel sharedDocumentsLabel;
     private GUIClient formManager;
@@ -32,6 +32,8 @@ public class ClientBoxForm extends  JFrame{
         setContentPane(mainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+
+
         pack();
 
 
@@ -46,17 +48,18 @@ public class ClientBoxForm extends  JFrame{
 
 
         System.out.println(client.getClientBox().getDocumentsIDSet().toString());
-        ownDocumentsLabel.setText(client.getClientUsername() + "\'s documents");
+        ownDocsList.setName(client.getClientUsername() + "\'s documents");
         ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
 
-        sharedDocumentsLabel.setText("Shared documents with " +client.getClientUsername());
+        sharedDocsList.setName("Shared documents with " +client.getClientUsername());
         sharedDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getSharedDocumentsIDSet()));
 
-
-
-
+        openButton.setEnabled(false);
+        deleteButton.setEnabled(false);
 
         newButton.addActionListener((ActionEvent e) -> {
+            openButton.setEnabled(false);
+            deleteButton.setEnabled(false);
             String title = (String)JOptionPane.showInputDialog(
                     this,
                     "Document title:",
@@ -65,6 +68,8 @@ public class ClientBoxForm extends  JFrame{
                     null,
                     null,
                     "");
+            if (title == null)
+                return;
             try {
                 Document_t document = client.createDocument(title);
                 while(document==null){
@@ -76,10 +81,12 @@ public class ClientBoxForm extends  JFrame{
                             null,
                             null,
                             "This title already exists.");
+                    if (title == null)
+                        return;
                     document = client.createDocument(title);
                 }
                 ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
-                DocumentForm documentForm = formManager.openDocument(document);
+                DocumentForm documentForm = formManager.openDocument(document, false);
 
 
             } catch (Exception e1) {
@@ -88,11 +95,29 @@ public class ClientBoxForm extends  JFrame{
 
         });
 
-        openButton.addActionListener(e -> {
-            System.out.println(ownDocsList.getSelectedValue());
-            Document_t document = client.downloadDocument(ownDocsList.getSelectedValue(), client.getClientUsername());
 
-            formManager.openDocument(document);
+
+        openButton.addActionListener(e -> {
+            if(ownDocsList.isSelectionEmpty() && sharedDocsList.isSelectionEmpty()) {
+                openButton.setEnabled(false);
+                deleteButton.setEnabled(false);
+                return;
+            }
+            Document_t document;
+            if(!ownDocsList.isSelectionEmpty()){
+                document = client.downloadDocument(
+                        ownDocsList.getSelectedValue(),
+                        client.getClientUsername(),
+                        client.getClientBox().getDocumentKey(ownDocsList.getSelectedValue()));
+                formManager.openDocument(document, false);
+            }else{
+                document = client.downloadDocument(
+                        sharedDocsList.getSelectedValue(),
+                        client.getClientBox().getSharedDocumentInfo(sharedDocsList.getSelectedValue()).getOwner(),
+                        client.getClientBox().getSharedDocumentKey(sharedDocsList.getSelectedValue()));
+                formManager.openDocument(document, true);
+            }
+
         });
 
         deleteButton.addActionListener(e -> {
@@ -105,6 +130,20 @@ public class ClientBoxForm extends  JFrame{
             formManager.backToLogin();
             dispose();
         });
+
+        ownDocsList.addListSelectionListener(e->{
+            openButton.setEnabled(true);
+            deleteButton.setEnabled(true);
+            sharedDocsList.clearSelection();
+
+        });
+
+        sharedDocsList.addListSelectionListener(e -> {
+            openButton.setEnabled(true);
+            deleteButton.setEnabled(false);
+            ownDocsList.clearSelection();
+        });
+
     }
 
     public static void main(String[] args) throws Exception {

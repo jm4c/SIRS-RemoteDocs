@@ -177,6 +177,10 @@ public class ImplementationClient {
 
     //Document's Operations
     public Document_t createDocument(String documentTitle) throws Exception {
+        if(documentTitle.equals("")){
+            return null;
+        }
+
         Document_t document = new Document_t(documentTitle, this.getClientUsername(), getClientBox().getPrivateKey());
         if(clientBox.getDocumentsIDSet().contains(document.getDocID())){
             System.out.println("Document with same title already exists");
@@ -184,7 +188,7 @@ public class ImplementationClient {
         }
         SecretKey key = getRandomSecretKey();
         clientBox.addDocument(document.getDocID(), document.getOwner(), key);
-        uploadDocument(document);
+        uploadDocument(document, false);
         return document;
 
     }
@@ -199,15 +203,20 @@ public class ImplementationClient {
         }
     }
 
-    public boolean uploadDocument(Document_t document){
+    public boolean uploadDocument(Document_t document, boolean isSharedDocument){
         try {
             if (document==null) {
                 throw new NullPointerException("document is null");
             }
 
-            SecretKey key = getClientBox().getDocumentKey(document.getDocID());
+            SecretKey key;
+            if(isSharedDocument){
+                key = getClientBox().getSharedDocumentKey(document.getDocID());
+            }else {
+                key = getClientBox().getDocumentKey(document.getDocID());
+            }
             String hashedDocID = HashUtils.hashInText(document.getDocID() + "&&" + document.getOwner(), null);
-            byte[] encryptedDocument = encrypt(key, getClientSalt(), document);
+            byte[] encryptedDocument = encrypt(key, server.getClientSalt(document.getOwner()), document);
             server.storeDocument(hashedDocID, encryptedDocument);
             resendClientBox();
             return true;
@@ -219,12 +228,11 @@ public class ImplementationClient {
 
     }
 
-    public Document_t downloadDocument(String documentID, String owner){
+    public Document_t downloadDocument(String documentID, String owner, SecretKey documentKey){
         try {
-            SecretKey documentKey = getClientBox().getDocumentKey(documentID);
             String hashedDocID = HashUtils.hashInText(documentID + "&&" + owner, null);
             byte[] encryptedDocument = server.getDocument(hashedDocID);
-            Document_t document = (Document_t) decrypt(documentKey, getClientSalt(), encryptedDocument);
+            Document_t document = (Document_t) decrypt(documentKey, server.getClientSalt(owner), encryptedDocument);
 
             //check document integrity
             if(!hash(document.getContent(), null).equals(document.getContentHash())){
@@ -298,13 +306,11 @@ public class ImplementationClient {
     public void shareDocument(String documentID,String targetUser) throws NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, SignatureException {
 
         PublicKey clientPublicKey = getUserPublicKey(targetUser);
-        //TODO bug javax.crypto.IllegalBlockSizeException: Data must not be longer than 245 bytes
         EncryptedDocInfo_t encryptedDocInfo = new EncryptedDocInfo_t(
                 encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getDocID()),
                 encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getOwner()),
                 encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getKey()));
-        //
-        // byte[] encryptedDocInfo = encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID));
+
         server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername());
 
         getClientBox().getDocumentInfo(documentID).addPermission(new Permission_t(targetUser, true));
@@ -314,12 +320,18 @@ public class ImplementationClient {
     public void getSharedDocuments() throws RemoteException {
         HashMap<String, List<EncryptedDocInfo_t>> binDocLists = server.getBinLists(getClientUsername());
         binDocLists.forEach((clientID, encryptedDocs) -> {
-            encryptedDocs.forEach(encryptedInfoDoc -> {
+            encryptedDocs.forEach((EncryptedDocInfo_t encryptedInfoDoc) -> {
                 DocumentInfo_t documentInfo = new DocumentInfo_t(
                         encryptedInfoDoc.getDocID(getClientBox().getPrivateKey()),
                         encryptedInfoDoc.getOwner(getClientBox().getPrivateKey()),
                         encryptedInfoDoc.getKey(getClientBox().getPrivateKey()));
                 getClientBox().addSharedDocument(documentInfo);
+                try {
+                    resendClientBox();
+                } catch (NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException
+                        | IOException | NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+                    e.printStackTrace();
+                }
             });
         });
     }
@@ -341,23 +353,24 @@ public class ImplementationClient {
         doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
         doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
 
-        client.uploadDocument(doc);
+        client.uploadDocument(doc, false);
 
-        client.uploadDocument(doc3);
+        client.uploadDocument(doc3, false);
 
         doc.print();
 
         doc3.print();
 
 
-        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername());
-        Document_t doc3Server = client.downloadDocument(doc.getDocID(), client.getClientUsername());
+        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername(), client.getClientBox().getDocumentKey(doc.getDocID()));
+        Document_t doc3Server = client.downloadDocument(doc3.getDocID(), client.getClientUsername(),client.getClientBox().getDocumentKey(doc3.getDocID()));
 
         docServer.print();
 
         doc3Server.print();
 
         client.getClientBox().print();
+
 
 
     }

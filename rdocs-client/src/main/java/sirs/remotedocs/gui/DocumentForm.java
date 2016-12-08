@@ -26,7 +26,7 @@ public class DocumentForm extends JFrame{
     private JButton saveButton;
     private JPanel PanelButtons;
 
-    public DocumentForm(Document_t document, ImplementationClient client, GUIClient formManager) {
+    public DocumentForm(Document_t document, ImplementationClient client, GUIClient formManager, boolean isSharedDocument) {
         this.document = document;
         this.client = client;
         this.formManager = formManager;
@@ -44,6 +44,8 @@ public class DocumentForm extends JFrame{
         textFieldLastEditor.setText(document.getLastEditor());
 
         textAreaContent.setText(document.getContent());
+        shareButton.setEnabled(!isSharedDocument);
+
         saveButton.addActionListener(e -> {
             try {
                 document.setContent(textAreaContent.getText(),client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
@@ -54,7 +56,8 @@ public class DocumentForm extends JFrame{
             } catch (IOException | NoSuchAlgorithmException | SignatureException | InvalidKeyException e1) {
                 e1.printStackTrace();
             }
-            client.uploadDocument(document);
+
+            client.uploadDocument(document, isSharedDocument);
         });
         closeButton.addActionListener(e -> {
             dispose();

@@ -16,9 +16,6 @@ public class LoginForm extends JFrame {
     private GUIClient formManager;
     private ImplementationClient client;
 
-    //TODO card layout permissions
-
-
 
     public LoginForm(ImplementationClient inputClient, GUIClient formManager){
         client = inputClient;

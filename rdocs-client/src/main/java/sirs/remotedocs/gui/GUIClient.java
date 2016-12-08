@@ -29,10 +29,12 @@ public class GUIClient {
         return clientBoxForm;
     }
 
-    public DocumentForm openDocument(Document_t document){
-        documentForm = new DocumentForm(document, client, this);
+    public DocumentForm openDocument(Document_t document, boolean isSharedDocument){
+        documentForm = new DocumentForm(document, client, this, isSharedDocument);
         return documentForm;
     }
+
+
 
     public LoginForm backToLogin(){
         loginForm = new LoginForm(client, this);
