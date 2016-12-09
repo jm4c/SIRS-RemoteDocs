@@ -16,7 +16,7 @@ public class EncryptedDocInfo_t extends Type_t implements Serializable{
 
     final private byte[] encryptedDocID;
     final private byte[] encryptedOwner;
-    private byte[] encryptedKey;
+    private final byte[] encryptedKey;
 
     public EncryptedDocInfo_t(byte[] docID, byte[] owner, byte[] key) {
         this.encryptedDocID = docID;
@@ -24,7 +24,6 @@ public class EncryptedDocInfo_t extends Type_t implements Serializable{
         this.encryptedKey = key;
     }
 
-    @Override
     public void print() {
         System.out.println("----DocInfo----");
         System.out.println("Doc ID: " + encryptedDocID.toString());

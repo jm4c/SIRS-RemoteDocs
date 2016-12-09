@@ -13,11 +13,6 @@ public class ClientInfo_t extends Type_t{
         setPublicKey(publicKey);
     }
 
-    @Override
-    public void print() {
-
-    }
-
 
     public byte[] getSalt() {
         return salt;

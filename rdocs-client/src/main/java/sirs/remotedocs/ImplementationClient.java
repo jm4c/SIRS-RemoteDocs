@@ -1,6 +1,5 @@
 package sirs.remotedocs;
 
-import exceptions.DocumentIntegrityCompromisedException;
 import interfaces.InterfaceServer;
 import types.*;
 
@@ -41,7 +40,7 @@ public class ImplementationClient {
         }
     }
 
-    public void setUsername(String username){
+    private void setUsername(String username){
         clientUsername = username;
     }
 
@@ -49,23 +48,23 @@ public class ImplementationClient {
         return clientUsername;
     }
 
-    public void setClientBox(ClientBox_t clientBox){
+    private void setClientBox(ClientBox_t clientBox){
         this.clientBox = clientBox;
     }
 
-    public void setClientSalt(byte[] clientSalt) {
+    private void setClientSalt(byte[] clientSalt) {
         this.clientSalt = clientSalt;
     }
 
-    public SecretKey getClientKey() {
+    private SecretKey getClientKey() {
         return clientKey;
     }
 
-    public void setClientKey(SecretKey secretKey) {
+    private void setClientKey(SecretKey secretKey) {
         this.clientKey = secretKey;
     }
 
-    public byte[] getClientSalt() {
+    private byte[] getClientSalt() {
         return clientSalt;
     }
 
@@ -81,7 +80,7 @@ public class ImplementationClient {
         return isConnected();
     }
 
-    public boolean isConnected(){
+    private boolean isConnected(){
         return server != null;
     }
 
@@ -166,7 +165,7 @@ public class ImplementationClient {
         }
     }
 
-    public void resendClientBox() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
+    private void resendClientBox() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
         byte[] encryptedClientBox = encrypt(getClientKey(), getClientSalt(), getClientBox());
         server.storeClientBox(getUsername(), getClientBox().getPublicKey(), getClientSalt(), encryptedClientBox);
     }
@@ -213,6 +212,13 @@ public class ImplementationClient {
 
             SecretKey key;
             if(isSharedDocument){
+                // to fix the document "stealing bug" by non-users, it is tested before uploading
+                Document_t testPermissionDocument = downloadDocument(
+                        document.getDocID(),
+                        getClientBox().getSharedDocumentInfo(document.getDocID()).getOwner(),
+                        getClientBox().getSharedDocumentKey(document.getDocID()));
+                if(testPermissionDocument == null)
+                    return false;
                 key = getClientBox().getSharedDocumentKey(document.getDocID());
             }else {
                 key = getClientBox().getDocumentKey(document.getDocID());
@@ -222,18 +228,17 @@ public class ImplementationClient {
             server.storeDocument(hashedDocID, encryptedDocument);
             resendClientBox();
             return true;
-        } catch ( NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException
-                | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException | NullPointerException e) {
+        } catch ( NoSuchAlgorithmException | IOException | NoSuchPaddingException | InvalidKeyException | BadPaddingException
+                | IllegalBlockSizeException | InvalidAlgorithmParameterException | NullPointerException | ClassNotFoundException e) {
             e.printStackTrace();
             return false;
         }
 
     }
 
-    public Document_t downloadDocument(String documentID, String owner, SecretKey documentKey) throws IOException, NoSuchAlgorithmException, ClassNotFoundException, //hash exception
-            NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, //crypto exceptions (wrong key)
-            SignatureException, DocumentIntegrityCompromisedException //wrong signature exception or hashes are different
-    {
+    public Document_t downloadDocument(String documentID, String owner, SecretKey documentKey) throws IOException, NoSuchAlgorithmException, ClassNotFoundException, //other exceptions
+            NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException {  //crypto exceptions (wrong key)
+
         String hashedDocID = hashInText(documentID + "&&" + owner, null);
         byte[] encryptedDocument = server.getDocument(hashedDocID);
 
@@ -241,13 +246,16 @@ public class ImplementationClient {
 
         //check document integrity
         if(!MessageDigest.isEqual(hash(document.getContent(), null),document.getContentHash()))
-//        if(!hash(document.getContent(), null).equals(document.getContentHash()))
-            throw new DocumentIntegrityCompromisedException();
-
-        //check signature
-        if(!verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
-            throw new SignatureException("Last editors' signature does not match");
-
+            document.setIntegrityFaultFlag();
+        else
+            //check signature
+            try {
+                if(!verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
+                    document.setSignatureFaultFlag();
+            } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException e) {
+                e.printStackTrace();
+                document.setSignatureFaultFlag();
+            }
 
         return document;
 
@@ -266,27 +274,7 @@ public class ImplementationClient {
         }
     }
 
-    public void removeSharedDocument(String documentID){
-        try {
-            getClientBox().removeDocument(documentID);
-            resendClientBox();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     // File Sharing
-
-    // for more sensible operations like trusting the device or change the password
-    public boolean doubleCheckPassword(String password){
-        try {
-            SecretKey secretKeyToCheck = getSecretKey(password, getClientSalt());
-            return secretKeyToCheck.equals(getClientKey());
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
 
     @SuppressWarnings("unchecked")
     public String[] getRegisteredUsers(){
@@ -318,7 +306,7 @@ public class ImplementationClient {
 
         server.storeObjectInClientBin(targetUser, encryptedDocInfo, getUsername());
 
-        getClientBox().getDocumentInfo(documentID).addPermission(new Permission_t(targetUser, true));
+        getClientBox().getDocumentInfo(documentID).addPermission(new Permission_t(targetUser));
         resendClientBox();
 
     }

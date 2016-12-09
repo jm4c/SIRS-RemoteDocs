@@ -12,10 +12,10 @@ import java.util.Set;
 public class ClientBox_t extends Type_t {
 
     private static final long serialVersionUID = 1L;
-    private String ownerID;
+    private final String ownerID;
     private KeyPair keyPair;
-    private HashMap<String, DocumentInfo_t> documents;
-    private HashMap<String, DocumentInfo_t> sharedDocuments;
+    private final HashMap<String, DocumentInfo_t> documents;
+    private final HashMap<String, DocumentInfo_t> sharedDocuments;
 
     public ClientBox_t(String ownerID) {
         this.ownerID = ownerID;
@@ -81,25 +81,6 @@ public class ClientBox_t extends Type_t {
     }
 
 
-
-
-    public void changePermission(String documentID, String clientID, String permissionLevel){
-        Permission_t permission;
-        switch (permissionLevel.toLowerCase()){
-            case "r":
-                permission = new Permission_t(clientID, false);
-                break;
-            case "rw":
-                permission = new Permission_t(clientID, true);
-                break;
-            default:
-                documents.get(documentID).removePermission(clientID);
-                return;
-        }
-        documents.get(documentID).addPermission(permission);
-    }
-
-    @Override
     public void print() {
         System.out.println("\n-----" + getOwnerID() + "'s Client Box------");
         System.out.println("-" + getOwnerID() + "'s docs:");

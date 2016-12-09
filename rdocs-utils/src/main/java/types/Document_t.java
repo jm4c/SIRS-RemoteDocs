@@ -22,11 +22,17 @@ public class Document_t extends Type_t {
     private byte[] signature;
     private String lastEditor;
     private Date timestamp;
+    private boolean signatureFaultFlag;
+    private boolean integrityFaultFlag;
+
+
 
     public Document_t(String docID, String owner, PrivateKey privateKey) throws Exception {
         this.docID = docID;
         this.owner = owner;
         this.lastEditor = owner;
+        this.signatureFaultFlag = false;
+        this.integrityFaultFlag = false;
         setContent("", owner, privateKey);
     }
 
@@ -55,6 +61,8 @@ public class Document_t extends Type_t {
         this.lastEditor = editor;
         this.timestamp = new Date();
         this.signature = sign(getContentHash(), privateKey);
+        integrityFaultFlag = false;
+        signatureFaultFlag = false;
 
     }
 
@@ -67,9 +75,24 @@ public class Document_t extends Type_t {
         return signature;
     }
 
+    public void setSignatureFaultFlag(){
+        signatureFaultFlag = true;
+    }
+
+    public boolean hasSignatureFaultFlag(){
+        return signatureFaultFlag;
+    }
+
+    public void setIntegrityFaultFlag(){
+        integrityFaultFlag = true;
+    }
+
+    public boolean hasIntegrityFaultFlag(){
+        return integrityFaultFlag;
+    }
 
 
-    @Override
+
     public void print() {
         System.out.println("----Document----");
         System.out.println("Doc ID: " + docID);

@@ -8,7 +8,7 @@ public class DocumentInfo_t extends Type_t{
     final private String docID;
     final private String owner;
     private SecretKey key;
-    private HashMap<String,Permission_t> permissions;
+    private final HashMap<String,Permission_t> permissions;
 
     public DocumentInfo_t(String docID, String owner, SecretKey key) {
         this.docID = docID;
@@ -17,7 +17,6 @@ public class DocumentInfo_t extends Type_t{
         this.permissions = new HashMap<>();
     }
 
-    @Override
     public void print() {
         System.out.println("----DocInfo----");
         System.out.println("Doc ID: " + docID);
@@ -39,10 +38,6 @@ public class DocumentInfo_t extends Type_t{
 
     public HashMap<String,Permission_t> getPermissions() {
         return permissions;
-    }
-
-    public Permission_t getPermission(String clientID){
-        return permissions.get(clientID);
     }
 
     public void addPermission(Permission_t permission) {

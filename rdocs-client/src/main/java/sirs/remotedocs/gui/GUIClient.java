@@ -31,7 +31,7 @@ public class GUIClient {
     }
 
     public DocumentForm openDocument(Document_t document, boolean isSharedDocument){
-        documentForm = new DocumentForm(document, client, this, isSharedDocument);
+        documentForm = new DocumentForm(document, client, clientBoxForm, isSharedDocument);
         documentForm.setLocationRelativeTo(clientBoxForm);
         return documentForm;
     }

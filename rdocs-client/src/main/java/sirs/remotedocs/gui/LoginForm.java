@@ -13,13 +13,11 @@ public class LoginForm extends JFrame {
     private JTextField tf_username;
     private JPasswordField tf_password;
     private JButton btn_exit;
-    private GUIClient formManager;
     private ImplementationClient client;
 
 
     public LoginForm(ImplementationClient inputClient, GUIClient formManager){
         client = inputClient;
-        this.formManager = formManager;
         setContentPane(loginMainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -75,7 +73,7 @@ public class LoginForm extends JFrame {
                     if(!password.getText().equals(repeatPassword.getText())){
                         JOptionPane.showMessageDialog(null, "Passwords don't match.");
                     }else{
-                        switch (client.register(username.getText(), new String(password.getText()))){
+                        switch (client.register(username.getText(), password.getText())){
                             case 0:
                                 JOptionPane.showMessageDialog(null,username.getText() + " successfully registered.");
                                 break;
@@ -106,9 +104,7 @@ public class LoginForm extends JFrame {
                 e1.printStackTrace();
             }
         });
-        btn_exit.addActionListener(e -> {
-            LoginForm.super.dispose();
-        });
+        btn_exit.addActionListener(e -> LoginForm.super.dispose());
 
     }
 

@@ -1,14 +1,11 @@
 package utils;
 
-import javax.crypto.Mac;
-import javax.crypto.SecretKey;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
-import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import static utils.CryptoUtils.*;
+import static utils.CryptoUtils.serialize;
 
 public class HashUtils {
 
@@ -27,13 +24,6 @@ public class HashUtils {
 
     public static String hashInText(Object msg, byte[] salt) throws IOException, NoSuchAlgorithmException {
         return DatatypeConverter.printHexBinary(hash(msg, salt));
-    }
-
-    public static byte[] getMAC(Object data, SecretKey key) throws IOException, NoSuchAlgorithmException, InvalidKeyException {
-        final byte[] serializedData = serialize(data);
-        Mac mac = Mac.getInstance(key.getAlgorithm());
-        mac.init(key);
-        return mac.doFinal(serializedData);
     }
 
 }

@@ -7,7 +7,7 @@ import java.util.List;
 public class ClientBin_t extends Type_t {
 
     private static final long serialVersionUID = 1L;
-    private String ownerID;
+    private final String ownerID;
     private HashMap<String, List<EncryptedDocInfo_t>> listsOfDocInfo;
 
 
@@ -37,7 +37,6 @@ public class ClientBin_t extends Type_t {
     }
 
 
-    @Override
     public void print() {
         System.out.println("Lists of documents in " + getOwnerID() + "'s bin:");
         if (!listsOfDocInfo.isEmpty()) {

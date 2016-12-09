@@ -19,7 +19,7 @@ public interface InterfaceServer extends Remote {
 
     String[] getRegisteredUsers() throws RemoteException;
 
-    void setUserPublicKey(String username, PublicKey key) throws  RemoteException;
+    // --Commented out by Inspection (09-Dec-16 05:44):void setUserPublicKey(String username, PublicKey key) throws  RemoteException;
 
     PublicKey getUserPublicKey(String username) throws RemoteException;
 

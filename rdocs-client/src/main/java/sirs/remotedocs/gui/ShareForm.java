@@ -21,7 +21,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 
-public class ShareForm extends JFrame{
+@SuppressWarnings("unchecked")
+class ShareForm extends JFrame{
     private ListTransferHandler arrayListHandler =
             new ListTransferHandler();
 
@@ -38,7 +39,6 @@ public class ShareForm extends JFrame{
         setTitle("SIRS Remote Docs - Permissions - " + client.getUsername());
         setSize(400,200);
         setResizable(false);
-        setLocationRelativeTo(null);
     }
 
     private JPanel getContent(Document_t document, ImplementationClient client) {
@@ -61,9 +61,7 @@ public class ShareForm extends JFrame{
         mainPanel.add(buttonsPanel);
 
         saveButton.addActionListener(actionEvent -> savePermissions(document, client));
-        cancelButton.addActionListener(e -> {
-            dispose();
-        });
+        cancelButton.addActionListener(e -> dispose());
 
         return mainPanel;
     }
@@ -86,24 +84,18 @@ public class ShareForm extends JFrame{
         // if there are new elements in not allowed list
         if(!notAllowedUsers.isEmpty()){
             //remove users from doc info permissions
-            notAllowedUsers.forEach(user ->{
-                client.getClientBox().getDocumentInfo(document.getDocID()).removePermission(user);
-            });
+            notAllowedUsers.forEach(user -> client.getClientBox().getDocumentInfo(document.getDocID()).removePermission(user));
 
             //reset document key
             client.changeDocumentKey(document);
 
             // send doc info to all users with permission in list (due to new doc key)
-            allowedUsers.forEach(user->{
-                shareDocInfo(user, document, client);
-            });
+            allowedUsers.forEach(user-> shareDocInfo(user, document, client));
         }else{
             // send doc info only to new clients with permission
             allowedUsers.removeAll(oldAllowedUsers);
             System.out.println("New allowed users: " + allowedUsers.toString());
-            allowedUsers.forEach(user->{
-                shareDocInfo(user, document, client);
-            });
+            allowedUsers.forEach(user-> shareDocInfo(user, document, client));
             System.out.println("------------END SAVE BUTTON------------------\n");
         }
 
@@ -120,7 +112,7 @@ public class ShareForm extends JFrame{
     }
 
 
-    private ArrayList<String> convertJList2ArrayList(JList list) {
+    private ArrayList<String> convertJList2ArrayList(JList<String> list) {
 
         ArrayList output = new ArrayList();
 

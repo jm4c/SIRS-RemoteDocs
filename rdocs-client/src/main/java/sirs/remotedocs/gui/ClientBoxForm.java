@@ -1,13 +1,13 @@
 package sirs.remotedocs.gui;
 
 
-import exceptions.DocumentIntegrityCompromisedException;
 import sirs.remotedocs.ImplementationClient;
 import types.Document_t;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.event.ActionEvent;
@@ -16,7 +16,6 @@ import java.rmi.RemoteException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SignatureException;
 
 import static utils.MiscUtils.getStringArrayFromCollection;
 
@@ -103,63 +102,66 @@ public class ClientBoxForm extends JFrame{
                 deleteButton.setEnabled(false);
                 return;
             }
-            Document_t document;
-            Boolean isShared = false;
+            Boolean isShared;
+            String docID;
+            String docOwner;
+            SecretKey docKey;
+
+            if(!ownDocsList.isSelectionEmpty()){
+                isShared = false;
+                docID = ownDocsList.getSelectedValue();
+                docOwner = client.getUsername();
+                docKey = client.getClientBox().getDocumentKey(docID);
+
+            }else{
+                isShared = true;
+                docID = sharedDocsList.getSelectedValue();
+                docOwner = client.getClientBox().getSharedDocumentInfo(docID).getOwner();
+                docKey = client.getClientBox().getSharedDocumentKey(docID);
+            }
             try {
-                if(!ownDocsList.isSelectionEmpty()){
-                    isShared = false;
-                    document = client.downloadDocument(
-                            ownDocsList.getSelectedValue(),
-                            client.getUsername(),
-                            client.getClientBox().getDocumentKey(ownDocsList.getSelectedValue()));
-                }else{
-                    isShared = true;
-                    document = client.downloadDocument(
-                            sharedDocsList.getSelectedValue(),
-                            client.getClientBox().getSharedDocumentInfo(sharedDocsList.getSelectedValue()).getOwner(),
-                            client.getClientBox().getSharedDocumentKey(sharedDocsList.getSelectedValue()));
-                }
+                Document_t document = client.downloadDocument(docID, docOwner, docKey);
+                if(document.hasIntegrityFaultFlag())
+                    JOptionPane.showMessageDialog(null,
+                            docID + "'s hash is not valid.\n" +
+                                    "Not allowed user could have tampered the content.",
+                            "Document Integrity Compromised",
+                            JOptionPane.WARNING_MESSAGE);
+
+                if(document.hasSignatureFaultFlag())
+                    JOptionPane.showMessageDialog(null,
+                            docID + "'s signature is not valid.\n" +
+                                    "Not allowed user could have edited the content.",
+                            "Invalid Signature",
+                            JOptionPane.WARNING_MESSAGE);
+
                 formManager.openDocument(document, isShared);
             } catch (IOException | NoSuchAlgorithmException | ClassNotFoundException ex) {
                 ex.printStackTrace();
             } catch (IllegalArgumentException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog (null,
-                        "This document ("+ sharedDocsList.getSelectedValue() + ") was removed by the owner.\n " +
-                                "Removing " + sharedDocsList.getSelectedValue() + " from shared documents list." ,
-                        "Revoked key",
-                        JOptionPane.WARNING_MESSAGE);
-                client.getClientBox().removeSharedDocument(sharedDocsList.getSelectedValue());
-                getSharedDocuments(client);
+                if (isShared) {
+                    JOptionPane.showMessageDialog (this,
+                            "This document ("+ docID + ") was removed by the owner.\n " +
+                                    "Removing " + docID + " from shared documents list." ,
+                            "Revoked key",
+                            JOptionPane.WARNING_MESSAGE);
+                    removeSharedDocument(client, docID);
+                }
 
             } catch (NoSuchPaddingException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException ex) {
                 ex.printStackTrace();
                 if(isShared){
-                    System.out.println("DocKey was revoked. Removing document from list.");
-                    JOptionPane.showMessageDialog (null,
+                    JOptionPane.showMessageDialog (this,
                             "Your permission to write " + sharedDocsList.getSelectedValue() + " was revoked. \n" +
                                     "Removing " + sharedDocsList.getSelectedValue() + " from shared documents list." ,
                             "Revoked key",
                             JOptionPane.WARNING_MESSAGE);
-                    client.getClientBox().removeSharedDocument(sharedDocsList.getSelectedValue());
-                    getSharedDocuments(client);
+                    removeSharedDocument(client, sharedDocsList.getSelectedValue());
 
                 }
-            } catch (SignatureException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null,
-                        sharedDocsList.getSelectedValue() + "'s signature is not valid.\n" +
-                                "Not allowed user could have edited the content.",
-                        "Invalid Signature",
-                        JOptionPane.WARNING_MESSAGE);
-            } catch (DocumentIntegrityCompromisedException ex) {
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(null,
-                        sharedDocsList.getSelectedValue() + "'s hash is not valid.\n" +
-                                "Not allowed user could have tampered the content.",
-                        "Document Integrity Compromised",
-                        JOptionPane.WARNING_MESSAGE);
             }
+
 
         });
 
@@ -187,6 +189,11 @@ public class ClientBoxForm extends JFrame{
             ownDocsList.clearSelection();
         });
 
+    }
+
+    void removeSharedDocument(ImplementationClient client, String docID) {
+        client.getClientBox().removeSharedDocument(docID);
+        getSharedDocuments(client);
     }
 
     private void getSharedDocuments(ImplementationClient client) {

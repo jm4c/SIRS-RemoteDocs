@@ -7,14 +7,15 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class ListTransferHandler extends TransferHandler {
-    DataFlavor localArrayListFlavor, serialArrayListFlavor;
-    String localArrayListType = DataFlavor.javaJVMLocalObjectMimeType +
+class ListTransferHandler extends TransferHandler {
+    private DataFlavor localArrayListFlavor;
+    private final DataFlavor serialArrayListFlavor;
+    private final String localArrayListType = DataFlavor.javaJVMLocalObjectMimeType +
             ";class=java.util.ArrayList";
-    JList source = null;
-    int[] indices = null;
-    int addIndex = -1; //Location where items were added
-    int addCount = 0;  //Number of items added
+    private JList source = null;
+    private int[] indices = null;
+    private int addIndex = -1; //Location where items were added
+    private int addCount = 0;  //Number of items added
 
     public ListTransferHandler() {
         try {
@@ -96,6 +97,7 @@ public class ListTransferHandler extends TransferHandler {
         addIndex = index;
         addCount = alist.size();
         for (int i=0; i < alist.size(); i++) {
+            //noinspection unchecked
             listModel.add(index++, alist.get(i));
         }
         return true;
@@ -152,19 +154,18 @@ public class ListTransferHandler extends TransferHandler {
 
     public boolean canImport(JComponent c, DataFlavor[] flavors) {
         if (hasLocalArrayListFlavor(flavors))  { return true; }
-        if (hasSerialArrayListFlavor(flavors)) { return true; }
-        return false;
+        return hasSerialArrayListFlavor(flavors);
     }
 
     protected Transferable createTransferable(JComponent c) {
         if (c instanceof JList) {
             source = (JList)c;
             indices = source.getSelectedIndices();
-            Object[] values = source.getSelectedValues();
+            @SuppressWarnings("deprecation") Object[] values = source.getSelectedValues();
             if (values == null || values.length == 0) {
                 return null;
             }
-            ArrayList<String> alist = new ArrayList<String>(values.length);
+            ArrayList<String> alist = new ArrayList<>(values.length);
             for (int i = 0; i < values.length; i++) {
                 Object o = values[i];
                 String str = o.toString();
@@ -181,7 +182,7 @@ public class ListTransferHandler extends TransferHandler {
     }
 
     public class ReportingListTransferable implements Transferable {
-        ArrayList data;
+        final ArrayList data;
 
         public ReportingListTransferable(ArrayList alist) {
             data = alist;
@@ -204,10 +205,7 @@ public class ListTransferHandler extends TransferHandler {
             if (localArrayListFlavor.equals(flavor)) {
                 return true;
             }
-            if (serialArrayListFlavor.equals(flavor)) {
-                return true;
-            }
-            return false;
+            return serialArrayListFlavor.equals(flavor);
         }
     }
 }

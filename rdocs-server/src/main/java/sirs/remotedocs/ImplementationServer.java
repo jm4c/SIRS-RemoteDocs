@@ -78,13 +78,6 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
         return getStringArrayFromCollection(clientsInfoMap.keySet());
     }
 
-    @Override
-    public void setUserPublicKey(String username, PublicKey key) throws RemoteException {
-        System.out.println("\nSET PUBLIC KEY! " + username);
-        System.out.println(key+"\n");
-
-        clientsInfoMap.get(username).setPublicKey(key);
-    }
 
     @Override
     public PublicKey getUserPublicKey(String username) throws RemoteException {
