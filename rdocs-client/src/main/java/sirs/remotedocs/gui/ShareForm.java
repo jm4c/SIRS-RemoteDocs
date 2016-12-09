@@ -8,6 +8,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -34,28 +35,37 @@ public class ShareForm extends JFrame{
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setupLists(document, client);
         getContentPane().add(getContent(document, client));
+        setTitle("SIRS Remote Docs - Permissions - " + client.getUsername());
         setSize(400,200);
+        setResizable(false);
         setLocationRelativeTo(null);
     }
 
     private JPanel getContent(Document_t document, ImplementationClient client) {
-        JPanel panel = new JPanel(new GridLayout(2,2));
-        JButton saveButton = new JButton();
-        JButton cancelButton = new JButton();
-        saveButton.setText("Save");
-        cancelButton.setText("Cancel");
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        panel.add(getListComponent(notAllowedUsers));
-        panel.add(getListComponent(allowedUsers));
-        panel.add(saveButton);
-        panel.add(cancelButton);
+        JPanel listsPanel = new JPanel(new GridLayout(1,0));
+        JPanel buttonsPanel = new JPanel(new FlowLayout());
+
+
+        listsPanel.add(getListComponent(notAllowedUsers, "Do not allow"));
+        listsPanel.add(getListComponent(allowedUsers, "Allow"));
+
+        JButton saveButton = new JButton("Save");
+        JButton cancelButton = new JButton("Cancel");
+        buttonsPanel.add(saveButton);
+        buttonsPanel.add(cancelButton);
+
+        mainPanel.add(listsPanel);
+        mainPanel.add(buttonsPanel);
 
         saveButton.addActionListener(actionEvent -> savePermissions(document, client));
         cancelButton.addActionListener(e -> {
             dispose();
         });
 
-        return panel;
+        return mainPanel;
     }
 
     private void savePermissions(Document_t document, ImplementationClient client) {
@@ -165,11 +175,14 @@ public class ShareForm extends JFrame{
     }
 
 
-    private JScrollPane getListComponent(JList list){
+    private JScrollPane getListComponent(JList list, String borderTitle){
         list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         list.setTransferHandler(arrayListHandler);
         list.setDragEnabled(true);
-        return new JScrollPane(list);
+
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.setBorder(new TitledBorder(borderTitle));
+        return scrollPane;
     }
 
 

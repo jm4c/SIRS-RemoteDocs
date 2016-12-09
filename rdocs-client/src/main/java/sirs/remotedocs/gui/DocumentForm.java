@@ -33,6 +33,7 @@ public class DocumentForm extends JFrame{
         setContentPane(mainPanel);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
+        setResizable(false);
         pack();
         setVisible(true);
 
