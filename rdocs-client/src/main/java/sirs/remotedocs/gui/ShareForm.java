@@ -177,10 +177,4 @@ class ShareForm extends JFrame{
         return scrollPane;
     }
 
-
-
-    public static void main(String[] args) {
-        ShareForm f = new ShareForm(null, null);
-        f.setVisible(true);
-    }
 }

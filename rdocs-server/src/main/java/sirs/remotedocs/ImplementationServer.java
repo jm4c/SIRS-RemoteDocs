@@ -81,9 +81,9 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
 
     @Override
     public PublicKey getUserPublicKey(String username) throws RemoteException {
-        System.out.println("\nGET PUBLIC KEY! " + username);
+
         PublicKey key = clientsInfoMap.get(username).getPublicKey();
-        System.out.println(key+"\n");
+
         return key;
     }
 
@@ -178,7 +178,7 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
 
     @Override
     public String greeting() throws RemoteException {
-        return "Hello There!";
+        return "Successfully connected to server.";
     }
 
 }

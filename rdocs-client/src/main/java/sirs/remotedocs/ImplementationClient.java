@@ -23,13 +23,11 @@ import static utils.HashUtils.hashInText;
 
 public class ImplementationClient {
 
+    private static InterfaceServer server;
     private String clientUsername;
     private ClientBox_t clientBox;
     private byte[] clientSalt;
     private SecretKey clientKey;
-
-
-    private static InterfaceServer server;
 
 
     public ImplementationClient() {
@@ -40,20 +38,12 @@ public class ImplementationClient {
         }
     }
 
-    private void setUsername(String username){
-        clientUsername = username;
-    }
-
     public String getUsername() {
         return clientUsername;
     }
 
-    private void setClientBox(ClientBox_t clientBox){
-        this.clientBox = clientBox;
-    }
-
-    private void setClientSalt(byte[] clientSalt) {
-        this.clientSalt = clientSalt;
+    private void setUsername(String username) {
+        clientUsername = username;
     }
 
     private SecretKey getClientKey() {
@@ -68,9 +58,16 @@ public class ImplementationClient {
         return clientSalt;
     }
 
+    private void setClientSalt(byte[] clientSalt) {
+        this.clientSalt = clientSalt;
+    }
 
     public ClientBox_t getClientBox(){
         return clientBox;
+    }
+
+    private void setClientBox(ClientBox_t clientBox) {
+        this.clientBox = clientBox;
     }
 
     public boolean connectToServer() throws Exception{
@@ -89,13 +86,12 @@ public class ImplementationClient {
         System.out.println("user: " + username);
         System.out.println("pw:   " + password);
 
-        //TODO fix after debugging, minimum letters and numbers maybe?
-        if(username.length()<1/*3*/ || username.length()>21){
+        if (username.length() < 3 || username.length() > 21) {
             System.out.println("Username must be between 4 and 20 characters long.");
             return 2;
         }
 
-        if(password.length()</*7*/1 || password.length()>65){
+        if (password.length() < 1 || password.length() > 65) {
             System.out.println("Password must be between 8 and 64 characters long.");
             return 3;
         }
@@ -143,7 +139,7 @@ public class ImplementationClient {
 
                 //downloads encrypted box from server
                 byte[] encryptedBox = server.getClientBox(username);
-                System.out.println("DATA RECEIVED (encrypted empty box): " + encryptedBox.toString() + "\n");
+                System.out.println("DATA RECEIVED (encrypted client box): " + encryptedBox.toString() + "\n");
 
                 //if can't decrypt the box means wrong password
                 setClientBox((ClientBox_t) decrypt(getClientKey(), getClientSalt(), encryptedBox));
@@ -339,47 +335,4 @@ public class ImplementationClient {
         }
     }
 
-    //TODO remove, just for testing
-    public static void main(String[] args) throws Exception{
-
-
-
-        ImplementationClient client = new ImplementationClient();
-//        client.register("Hello", "helloworld");
-//        client.login("Hello", "helloworld");
-//        System.out.println("list of docs:");
-//        client.getClientBox().print();
-//
-//
-//        Document_t doc = client.createDocument("title example");
-//        Document_t doc3 = client.createDocument("title example 3");
-//        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-//        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-//
-//        client.uploadDocument(doc, false);
-//
-//        client.uploadDocument(doc3, false);
-//
-//        doc.print();
-//
-//        doc3.print();
-//
-//
-//        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getUsername(), client.getClientBox().getDocumentKey(doc.getDocID()));
-//        Document_t doc3Server = client.downloadDocument(doc3.getDocID(), client.getUsername(),client.getClientBox().getDocumentKey(doc3.getDocID()));
-//
-//        docServer.print();
-//
-//        doc3Server.print();
-//
-//        client.getClientBox().print();
-
-        client.login("1", "1");
-
-        client.getSharedDocuments();
-        client.getClientBox().print();
-
-
-
-    }
 }
