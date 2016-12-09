@@ -62,6 +62,4 @@ public class EncryptedDocInfo_t extends Type_t implements Serializable{
         }
     }
 
-
-
 }

@@ -51,6 +51,8 @@ public class Document_t extends Type_t {
     public void setContent(String content, String editor, PrivateKey privateKey) throws IOException, NoSuchAlgorithmException, SignatureException, InvalidKeyException {
         this.content = content;
         this.contentHash = hash(content, null);
+
+        this.lastEditor = editor;
         this.timestamp = new Date();
         this.signature = sign(getContentHash(), privateKey);
 

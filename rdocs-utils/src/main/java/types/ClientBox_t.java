@@ -67,6 +67,11 @@ public class ClientBox_t extends Type_t {
         documents.remove(documentID);
     }
 
+    public void removeSharedDocument(String documentID){
+        sharedDocuments.remove(documentID);
+    }
+
+
     public void changeDocumentKey(String documentID, SecretKey newKey){
         documents.get(documentID).setKey(newKey);
     }

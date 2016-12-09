@@ -38,6 +38,7 @@ public class DocumentForm extends JFrame{
 
 
         //get info from document
+        this.setTitle(document.getDocID());
         textFieldTitle.setText(document.getDocID());
         textFieldOwner.setText(document.getOwner());
         textFieldTimestamp.setText(getDateFormatted(document.getTimestamp()));

@@ -10,6 +10,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
@@ -49,48 +50,7 @@ public class ShareForm extends JFrame{
         panel.add(saveButton);
         panel.add(cancelButton);
 
-        saveButton.addActionListener(actionEvent -> {
-            System.out.println("\n------------STARTING SAVE BUTTON------------------");
-
-            ArrayList<String> notAllowedUsers = convertJList2ArrayList(this.notAllowedUsers);
-            ArrayList<String> allowedUsers = convertJList2ArrayList(this.allowedUsers);
-
-            System.out.println("All not allowed users: " + notAllowedUsers.toString());
-            System.out.println("New not allowed users: " + allowedUsers.toString());
-            System.out.println("\n------------------------------");
-
-            System.out.println("All allowed users: " + notAllowedUsers.toString());
-
-            //remove old elements from list
-            notAllowedUsers.removeAll(oldNotAllowedUsers);
-
-            // if there are new elements in not allowed list
-            if(!notAllowedUsers.isEmpty()){
-                //remove users from doc info permissions
-                notAllowedUsers.forEach(user ->{
-                    client.getClientBox().getDocumentInfo(document.getDocID()).removePermission(user);
-                });
-
-                //reset document key
-                client.changeDocumentKey(document);
-
-                // send doc info to all users with permission in list (due to new doc key)
-                allowedUsers.forEach(user->{
-                    shareDocInfo(user, document, client);
-                });
-            }else{
-                // send doc info only to new clients with permission
-                allowedUsers.removeAll(oldAllowedUsers);
-                System.out.println("New allowed users: " + allowedUsers.toString());
-                allowedUsers.forEach(user->{
-                    shareDocInfo(user, document, client);
-                });
-                System.out.println("------------END SAVE BUTTON------------------\n");
-
-                dispose();
-
-            }
-        });
+        saveButton.addActionListener(actionEvent -> savePermissions(document, client));
         cancelButton.addActionListener(e -> {
             dispose();
         });
@@ -98,11 +58,53 @@ public class ShareForm extends JFrame{
         return panel;
     }
 
+    private void savePermissions(Document_t document, ImplementationClient client) {
+        System.out.println("\n------------STARTING SAVE BUTTON------------------");
+
+        ArrayList<String> notAllowedUsers = convertJList2ArrayList(this.notAllowedUsers);
+        ArrayList<String> allowedUsers = convertJList2ArrayList(this.allowedUsers);
+
+        System.out.println("All not allowed users: " + notAllowedUsers.toString());
+        System.out.println("New not allowed users: " + allowedUsers.toString());
+        System.out.println("\n------------------------------");
+
+        System.out.println("All allowed users: " + notAllowedUsers.toString());
+
+        //remove old elements from list
+        notAllowedUsers.removeAll(oldNotAllowedUsers);
+
+        // if there are new elements in not allowed list
+        if(!notAllowedUsers.isEmpty()){
+            //remove users from doc info permissions
+            notAllowedUsers.forEach(user ->{
+                client.getClientBox().getDocumentInfo(document.getDocID()).removePermission(user);
+            });
+
+            //reset document key
+            client.changeDocumentKey(document);
+
+            // send doc info to all users with permission in list (due to new doc key)
+            allowedUsers.forEach(user->{
+                shareDocInfo(user, document, client);
+            });
+        }else{
+            // send doc info only to new clients with permission
+            allowedUsers.removeAll(oldAllowedUsers);
+            System.out.println("New allowed users: " + allowedUsers.toString());
+            allowedUsers.forEach(user->{
+                shareDocInfo(user, document, client);
+            });
+            System.out.println("------------END SAVE BUTTON------------------\n");
+        }
+
+        client.uploadDocument(document, !allowedUsers.isEmpty());
+        dispose();
+    }
+
     private void shareDocInfo(String user, Document_t document, ImplementationClient client){
         try {
             client.shareDocument(document.getDocID(), user);
-        } catch ( NoSuchPaddingException | SignatureException | IOException | InvalidKeyException
-                | BadPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException e) {
+        } catch ( NoSuchPaddingException | SignatureException | IOException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
         }
     }
@@ -129,13 +131,14 @@ public class ShareForm extends JFrame{
         Set<String> notAllowedUsersSet = new HashSet<>();
         Collections.addAll(notAllowedUsersSet, registeredUsers);
 
+        //remove owner from permissions table
+        notAllowedUsersSet.remove(client.getUsername());
+
         Set<String> allowedUsersSet = client.getClientBox().getDocumentInfo(document.getDocID()).getPermissions().keySet();
 
         //removing users with permission from list
-        notAllowedUsersSet.forEach(user -> {
-            if(allowedUsersSet.contains(user))
-                notAllowedUsersSet.remove(user);
-        });
+        notAllowedUsersSet.removeAll(allowedUsersSet);
+
 
         System.out.println("\n------------STARTING SETUP LISTS------------------");
         System.out.println("Registered Users: " + registeredUsers.length);
@@ -150,18 +153,14 @@ public class ShareForm extends JFrame{
 
         //converting to JList
         DefaultListModel modelNoPermission = new DefaultListModel();
-        notAllowedUsersSet.forEach(user ->{
-            modelNoPermission.addElement(user);
-        });
+        notAllowedUsersSet.forEach(modelNoPermission::addElement);
         notAllowedUsers = new JList(modelNoPermission);
-        notAllowedUsers.setName("No permission");
+
 
         DefaultListModel modelWithPermission= new DefaultListModel();
-        allowedUsersSet.forEach(user ->{
-            modelWithPermission.addElement(user);
-        });
+        allowedUsersSet.forEach(modelWithPermission::addElement);
         allowedUsers= new JList(modelWithPermission);
-        allowedUsers.setName("RW");
+
 
     }
 

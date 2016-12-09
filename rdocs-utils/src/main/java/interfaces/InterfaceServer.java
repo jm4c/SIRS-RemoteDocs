@@ -37,4 +37,6 @@ public interface InterfaceServer extends Remote {
 
     HashMap<String, List<EncryptedDocInfo_t>> getBinLists(String binOwner) throws RemoteException;
 
+    void emptyBin(String binOwner, byte[] signedSerializedDate, byte[] signature) throws RemoteException;
+
 }

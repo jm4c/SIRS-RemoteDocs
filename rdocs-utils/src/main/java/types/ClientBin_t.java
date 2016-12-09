@@ -23,8 +23,8 @@ public class ClientBin_t extends Type_t {
         listsOfDocInfo.get(owner).add(encryptedDocInfo);
     }
 
-    public void removeOwnerList(String ownerID){
-        listsOfDocInfo.remove(ownerID);
+    public void emptyBin(){
+        this.listsOfDocInfo = new HashMap<>();
     }
 
     public HashMap<String, List<EncryptedDocInfo_t>> getLists(){

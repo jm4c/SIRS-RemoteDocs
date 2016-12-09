@@ -9,13 +9,15 @@ import java.io.File;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.SignatureException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static utils.CryptoUtils.deserialize;
-import static utils.CryptoUtils.serialize;
+import static utils.CryptoUtils.*;
 import static utils.FileUtils.*;
 import static utils.HashUtils.hashInText;
 import static utils.MiscUtils.getStringArrayFromCollection;
@@ -167,7 +169,18 @@ public class ImplementationServer extends UnicastRemoteObject implements Interfa
     @Override
     public HashMap<String, List<EncryptedDocInfo_t>> getBinLists(String binOwner) throws RemoteException {
         return clientsBinsMap.get(binOwner).getLists();
-        //TODO manage downloaded lists but avoid deleting lists not read yet
+    }
+
+    @Override
+    public void emptyBin(String binOwner, byte[] signedSerializedDate, byte[] signature) throws RemoteException {
+        try {
+            // signature guarantees authenticity, timestamp guarantees freshness
+            Date minimumDate = new Date(new Date().getTime() - (60*1000L)); // signed_timestamp must be after (current_time - 1 minute)
+            if(verify(signedSerializedDate, getUserPublicKey(binOwner), signature) && ((Date) deserialize(signedSerializedDate)).after(minimumDate))
+                clientsBinsMap.get(binOwner).emptyBin();
+        } catch (NoSuchAlgorithmException | InvalidKeyException | SignatureException | IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

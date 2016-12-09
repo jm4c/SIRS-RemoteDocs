@@ -1,8 +1,8 @@
 package sirs.remotedocs;
 
+import exceptions.DocumentIntegrityCompromisedException;
 import interfaces.InterfaceServer;
 import types.*;
-import utils.HashUtils;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -14,11 +14,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import static utils.CryptoUtils.*;
 import static utils.HashUtils.hash;
+import static utils.HashUtils.hashInText;
 
 public class ImplementationClient {
 
@@ -39,11 +41,11 @@ public class ImplementationClient {
         }
     }
 
-    public void setClientUsername(String username){
+    public void setUsername(String username){
         clientUsername = username;
     }
 
-    public String getClientUsername() {
+    public String getUsername() {
         return clientUsername;
     }
 
@@ -146,7 +148,7 @@ public class ImplementationClient {
 
                 //if can't decrypt the box means wrong password
                 setClientBox((ClientBox_t) decrypt(getClientKey(), getClientSalt(), encryptedBox));
-                setClientUsername(username);
+                setUsername(username);
 
 
                 return 0;
@@ -166,12 +168,12 @@ public class ImplementationClient {
 
     public void resendClientBox() throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IOException, BadPaddingException, IllegalBlockSizeException, InvalidKeyException {
         byte[] encryptedClientBox = encrypt(getClientKey(), getClientSalt(), getClientBox());
-        server.storeClientBox(getClientUsername(), getClientBox().getPublicKey(), getClientSalt(), encryptedClientBox);
+        server.storeClientBox(getUsername(), getClientBox().getPublicKey(), getClientSalt(), encryptedClientBox);
     }
 
     public void logout(){
         setClientBox(null);
-        setClientUsername("");
+        setUsername("");
         setClientKey(null);
     }
 
@@ -181,7 +183,7 @@ public class ImplementationClient {
             return null;
         }
 
-        Document_t document = new Document_t(documentTitle, this.getClientUsername(), getClientBox().getPrivateKey());
+        Document_t document = new Document_t(documentTitle, this.getUsername(), getClientBox().getPrivateKey());
         if(clientBox.getDocumentsIDSet().contains(document.getDocID())){
             System.out.println("Document with same title already exists");
             return null;
@@ -215,7 +217,7 @@ public class ImplementationClient {
             }else {
                 key = getClientBox().getDocumentKey(document.getDocID());
             }
-            String hashedDocID = HashUtils.hashInText(document.getDocID() + "&&" + document.getOwner(), null);
+            String hashedDocID = hashInText(document.getDocID() + "&&" + document.getOwner(), null);
             byte[] encryptedDocument = encrypt(key, server.getClientSalt(document.getOwner()), document);
             server.storeDocument(hashedDocID, encryptedDocument);
             resendClientBox();
@@ -228,33 +230,27 @@ public class ImplementationClient {
 
     }
 
-    public Document_t downloadDocument(String documentID, String owner, SecretKey documentKey){
-        try {
-            String hashedDocID = HashUtils.hashInText(documentID + "&&" + owner, null);
-            byte[] encryptedDocument = server.getDocument(hashedDocID);
-            Document_t document = (Document_t) decrypt(documentKey, server.getClientSalt(owner), encryptedDocument);
+    public Document_t downloadDocument(String documentID, String owner, SecretKey documentKey) throws IOException, NoSuchAlgorithmException, ClassNotFoundException, //hash exception
+            NoSuchPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, //crypto exceptions (wrong key)
+            SignatureException, DocumentIntegrityCompromisedException //wrong signature exception or hashes are different
+    {
+        String hashedDocID = hashInText(documentID + "&&" + owner, null);
+        byte[] encryptedDocument = server.getDocument(hashedDocID);
 
-            //check document integrity
-            if(!hash(document.getContent(), null).equals(document.getContentHash())){
-                //TODO throw custom exception
-            }
+        Document_t document = (Document_t) decrypt(documentKey, server.getClientSalt(owner), encryptedDocument);
 
-            //TODO verify owner's identity
-//            if(verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
-//                throw new SignatureException("Last editors' signature does not match");
+        //check document integrity
+        if(!MessageDigest.isEqual(hash(document.getContent(), null),document.getContentHash()))
+//        if(!hash(document.getContent(), null).equals(document.getContentHash()))
+            throw new DocumentIntegrityCompromisedException();
+
+        //check signature
+        if(!verify(document.getContentHash(), getUserPublicKey(document.getLastEditor()), document.getSignature()))
+            throw new SignatureException("Last editors' signature does not match");
 
 
-            return document;
+        return document;
 
-        } catch ( ClassNotFoundException | BadPaddingException | NoSuchAlgorithmException | InvalidAlgorithmParameterException
-                | InvalidKeyException | IOException | NoSuchPaddingException | IllegalBlockSizeException e) {
-            e.printStackTrace();
-//        } catch (SignatureException e) {
-//            e.printStackTrace();
-//            System.out.println();
-        }
-
-        return null;
     }
 
 
@@ -262,11 +258,20 @@ public class ImplementationClient {
         try {
             getClientBox().removeDocument(documentID);
             resendClientBox();
-            String hashedDocID = HashUtils.hashInText(documentID + "&&" + getClientBox().getOwnerID(), null);
+            String hashedDocID = hashInText(documentID + "&&" + getClientBox().getOwnerID(), null);
             return server.removeDocument(hashedDocID);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public void removeSharedDocument(String documentID){
+        try {
+            getClientBox().removeDocument(documentID);
+            resendClientBox();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -303,7 +308,7 @@ public class ImplementationClient {
         }
     }
 
-    public void shareDocument(String documentID,String targetUser) throws NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, SignatureException {
+    public void shareDocument(String documentID,String targetUser) throws NoSuchPaddingException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, IOException, SignatureException, InvalidAlgorithmParameterException {
 
         PublicKey clientPublicKey = getUserPublicKey(targetUser);
         EncryptedDocInfo_t encryptedDocInfo = new EncryptedDocInfo_t(
@@ -311,14 +316,15 @@ public class ImplementationClient {
                 encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getOwner()),
                 encrypt(clientPublicKey, getClientBox().getDocumentInfo(documentID).getKey()));
 
-        server.storeObjectInClientBin(targetUser, encryptedDocInfo, getClientUsername());
+        server.storeObjectInClientBin(targetUser, encryptedDocInfo, getUsername());
 
         getClientBox().getDocumentInfo(documentID).addPermission(new Permission_t(targetUser, true));
+        resendClientBox();
 
     }
 
     public void getSharedDocuments() throws RemoteException {
-        HashMap<String, List<EncryptedDocInfo_t>> binDocLists = server.getBinLists(getClientUsername());
+        HashMap<String, List<EncryptedDocInfo_t>> binDocLists = server.getBinLists(getUsername());
         binDocLists.forEach((clientID, encryptedDocs) -> {
             encryptedDocs.forEach((EncryptedDocInfo_t encryptedInfoDoc) -> {
                 DocumentInfo_t documentInfo = new DocumentInfo_t(
@@ -334,6 +340,15 @@ public class ImplementationClient {
                 }
             });
         });
+
+        try {
+            Date currentTime = new Date();
+            byte[] signedSerializedCurrentTime = serialize(currentTime);
+            byte[] signature = sign(signedSerializedCurrentTime, getClientBox().getPrivateKey());
+            server.emptyBin(getUsername(), signedSerializedCurrentTime, signature);
+        } catch (IOException | NoSuchAlgorithmException | SignatureException | InvalidKeyException e) {
+            e.printStackTrace();
+        }
     }
 
     //TODO remove, just for testing
@@ -342,33 +357,38 @@ public class ImplementationClient {
 
 
         ImplementationClient client = new ImplementationClient();
-        client.register("Hello", "helloworld");
-        client.login("Hello", "helloworld");
-        System.out.println("list of docs:");
-        client.getClientBox().print();
+//        client.register("Hello", "helloworld");
+//        client.login("Hello", "helloworld");
+//        System.out.println("list of docs:");
+//        client.getClientBox().print();
+//
+//
+//        Document_t doc = client.createDocument("title example");
+//        Document_t doc3 = client.createDocument("title example 3");
+//        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+//        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+//
+//        client.uploadDocument(doc, false);
+//
+//        client.uploadDocument(doc3, false);
+//
+//        doc.print();
+//
+//        doc3.print();
+//
+//
+//        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getUsername(), client.getClientBox().getDocumentKey(doc.getDocID()));
+//        Document_t doc3Server = client.downloadDocument(doc3.getDocID(), client.getUsername(),client.getClientBox().getDocumentKey(doc3.getDocID()));
+//
+//        docServer.print();
+//
+//        doc3Server.print();
+//
+//        client.getClientBox().print();
 
+        client.login("1", "1");
 
-        Document_t doc = client.createDocument("title example");
-        Document_t doc3 = client.createDocument("title example 3");
-        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-
-        client.uploadDocument(doc, false);
-
-        client.uploadDocument(doc3, false);
-
-        doc.print();
-
-        doc3.print();
-
-
-        Document_t docServer = client.downloadDocument(doc.getDocID(), client.getClientUsername(), client.getClientBox().getDocumentKey(doc.getDocID()));
-        Document_t doc3Server = client.downloadDocument(doc3.getDocID(), client.getClientUsername(),client.getClientBox().getDocumentKey(doc3.getDocID()));
-
-        docServer.print();
-
-        doc3Server.print();
-
+        client.getSharedDocuments();
         client.getClientBox().print();
 
 
