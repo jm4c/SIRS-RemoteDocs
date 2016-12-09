@@ -30,6 +30,8 @@ and the client(s) with
 Client usage
 ------------
 
+The server address may be configures in `rdocs-client/src/main/resources/client.properties` (the default is localhost).
+
 First, register a new user by clicking register and filling in the form.
 
 Then, login with the user you just created and create a new document by clicking "New".
