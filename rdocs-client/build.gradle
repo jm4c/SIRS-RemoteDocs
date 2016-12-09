@@ -1,7 +1,7 @@
 apply plugin: 'application'
-mainClassName = "sirs.remotedocs.ImplementationClient"
+mainClassName = "sirs.remotedocs.gui.GUIClient"
 
 dependencies {
     compile project(':rdocs-utils')
-    compile 'com.intellij:forms_rt:6.0.5'
+    compile 'com.intellij:forms_rt:7.0.3'
 }
