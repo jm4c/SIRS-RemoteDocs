@@ -88,8 +88,8 @@ public class ImplementationClient {
             return 2;
         }
 
-        if (password.length() < 7 || password.length() > 65) {
-            System.out.println("Password must be between 8 and 64 characters long.");
+        if (password.length() < 7) {
+            System.out.println("Password must be at least 8 characters long.");
             return 3;
         }
 
