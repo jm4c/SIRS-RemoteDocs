@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id=":rdocs-client:test" external.linked.project.path="$MODULE_DIR$/../../../rdocs-client" external.root.project.path="$MODULE_DIR$/../../.." external.system.id="GRADLE" external.system.module.group="sirs.remotedocs" external.system.module.type="sourceSet" external.system.module.version="1.0-SNAPSHOT" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="false">
+    <output-test url="file://$MODULE_DIR$/../../../rdocs-client/build/classes/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../rdocs-client/src/test">
+      <sourceFolder url="file://$MODULE_DIR$/../../../rdocs-client/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/../../../rdocs-client/src/test/resources" type="java-test-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="rdocs-client_main" />
+    <orderEntry type="module" module-name="rdocs-utils_main" />
+    <orderEntry type="library" name="Gradle: com.intellij:forms_rt:7.0.3" level="project" />
+    <orderEntry type="library" name="Gradle: asm:asm-commons:3.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.jgoodies:forms:1.1-preview" level="project" />
+    <orderEntry type="library" name="Gradle: jdom:jdom:1.0" level="project" />
+    <orderEntry type="library" name="Gradle: asm:asm-tree:3.0" level="project" />
+    <orderEntry type="library" name="Gradle: asm:asm:3.0" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="rdocs-client_main" />
+</module>

@@ -25,7 +25,6 @@ public class LoginForm extends JFrame {
         $$$setupUI$$$();
     }
 
-
     public LoginForm(ImplementationClient inputClient, GUIClient formManager) {
         client = inputClient;
         setContentPane(loginMainPanel);
