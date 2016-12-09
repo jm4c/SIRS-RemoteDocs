@@ -9,6 +9,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -31,17 +32,16 @@ public class ClientBoxForm extends JFrame{
     private JButton logoutButton;
     private JScrollPane ownListScrollPane;
     private JScrollPane sharedListScrollPane;
-    private JLabel ownDocumentsLabel;
-    private JLabel sharedDocumentsLabel;
 
     public ClientBoxForm(ImplementationClient client, GUIClient formManager){
         setContentPane(mainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
+        setResizable(false);
+        setTitle("SIRS Remote Docs - " + client.getUsername());
         pack();
 
-        sharedDocumentsLabel.setText("Shared documents with " +client.getUsername());
+        sharedListScrollPane.setBorder(new TitledBorder("Shared documents"));
+
 
         getSharedDocuments(client);
 
@@ -50,7 +50,7 @@ public class ClientBoxForm extends JFrame{
 
 
         System.out.println(client.getClientBox().getDocumentsIDSet().toString());
-        ownDocumentsLabel.setText(client.getUsername() + "\'s documents");
+        ownListScrollPane.setBorder(new TitledBorder(client.getUsername() + "\'s documents"));
         ownDocsList.setListData(getStringArrayFromCollection(client.getClientBox().getDocumentsIDSet()));
 
 
@@ -125,7 +125,7 @@ public class ClientBoxForm extends JFrame{
             } catch (IllegalArgumentException ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog (null,
-                        "This document ("+ sharedDocsList.getSelectedValue() + ") was removed by the owner." +
+                        "This document ("+ sharedDocsList.getSelectedValue() + ") was removed by the owner.\n " +
                                 "Removing " + sharedDocsList.getSelectedValue() + " from shared documents list." ,
                         "Revoked key",
                         JOptionPane.WARNING_MESSAGE);
@@ -137,7 +137,7 @@ public class ClientBoxForm extends JFrame{
                 if(isShared){
                     System.out.println("DocKey was revoked. Removing document from list.");
                     JOptionPane.showMessageDialog (null,
-                            "Your permission to write " + sharedDocsList.getSelectedValue() + " was revoked\n" +
+                            "Your permission to write " + sharedDocsList.getSelectedValue() + " was revoked. \n" +
                                     "Removing " + sharedDocsList.getSelectedValue() + " from shared documents list." ,
                             "Revoked key",
                             JOptionPane.WARNING_MESSAGE);

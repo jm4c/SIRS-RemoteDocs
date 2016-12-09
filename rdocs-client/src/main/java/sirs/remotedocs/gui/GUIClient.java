@@ -26,11 +26,13 @@ public class GUIClient {
 
     public ClientBoxForm openClientBox(){
         clientBoxForm = new ClientBoxForm(client, this);
+        clientBoxForm.setLocationRelativeTo(loginForm);
         return clientBoxForm;
     }
 
     public DocumentForm openDocument(Document_t document, boolean isSharedDocument){
         documentForm = new DocumentForm(document, client, this, isSharedDocument);
+        documentForm.setLocationRelativeTo(clientBoxForm);
         return documentForm;
     }
 

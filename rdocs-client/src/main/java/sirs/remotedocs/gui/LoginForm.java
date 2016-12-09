@@ -24,6 +24,7 @@ public class LoginForm extends JFrame {
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
+        setTitle("Login");
         pack();
 
 
