@@ -83,9 +83,6 @@ public class ImplementationClient {
 
     //Account's Operations
     public int register(String username, String password) {
-        System.out.println("user: " + username);
-        System.out.println("pw:   " + password);
-
         if (username.length() < 3 || username.length() > 21) {
             System.out.println("Username must be between 4 and 20 characters long.");
             return 2;
