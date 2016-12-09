@@ -13,12 +13,9 @@ public class HelloWorldDemo {
         ImplementationClient client = new ImplementationClient();
 
         client.register("Hello", "helloworld");
-        try {
-            client.login("Hello", "helloworld");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        System.out.println("list of docs:");
+
+        client.login("Hello", "helloworld");
+
         client.getClientBox().print();
 
 
@@ -26,16 +23,25 @@ public class HelloWorldDemo {
         Document_t doc2 = client.createDocument("title example"); //no document created since same title already exists
         Document_t doc3 = client.createDocument("title example 3");
 
-        doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
 
         try {
             doc2.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
-        } catch (Exception e) {
+
+        } catch (NullPointerException e) {
             e.printStackTrace();
-            System.out.println("Expected exception, doesn't exist.");
+            System.out.println("Expected exception, doc2 is null since the title used already exists.");
         }
 
-        doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+
+        try {
+            doc.setContent("example content!", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+            doc3.setContent("example content 3", client.getClientBox().getOwnerID(), client.getClientBox().getPrivateKey());
+        } catch (NullPointerException e) {
+            e.printStackTrace();
+            System.out.println("Expected exception, since this demo already ran once, the document titles already exist and both doc and doc3 are null.");
+            doc = client.downloadDocument("title example", client.getUsername(), client.getClientBox().getDocumentKey("title example"));
+            doc3 = client.downloadDocument("title example 3", client.getUsername(), client.getClientBox().getDocumentKey("title example 3"));
+        }
 
         client.uploadDocument(doc, false);
 
