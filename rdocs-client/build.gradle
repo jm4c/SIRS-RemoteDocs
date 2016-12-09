@@ -1,18 +1,7 @@
-buildscript {
-    repositories {
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-    }
-    dependencies {
-        classpath "gradle.plugin.org.jetbrains:gradle-intellij-plugin:0.1.10"
-    }
-}
-
-apply plugin: "org.jetbrains.intellij"
-apply plugin: "application"
-mainClassName = "sirs.remotedocs.gui.GUIClient"
+apply plugin: 'application'
+mainClassName = "sirs.remotedocs.ImplementationClient"
 
 dependencies {
     compile project(':rdocs-utils')
+    compile 'com.intellij:forms_rt:6.0.5'
 }

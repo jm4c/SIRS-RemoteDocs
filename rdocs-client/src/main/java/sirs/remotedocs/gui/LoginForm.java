@@ -1,8 +1,11 @@
 package sirs.remotedocs.gui;
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import sirs.remotedocs.ImplementationClient;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class LoginForm extends JFrame {
 
@@ -16,7 +19,7 @@ public class LoginForm extends JFrame {
     private ImplementationClient client;
 
 
-    public LoginForm(ImplementationClient inputClient, GUIClient formManager){
+    public LoginForm(ImplementationClient inputClient, GUIClient formManager) {
         client = inputClient;
         setContentPane(loginMainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -26,28 +29,27 @@ public class LoginForm extends JFrame {
         pack();
 
 
-
         btn_login.addActionListener(e -> {
             try {
 
-                switch (client.login(tf_username.getText(), new String(tf_password.getPassword()))){
+                switch (client.login(tf_username.getText(), new String(tf_password.getPassword()))) {
                     case 0:
                         GUIClient.switchForms(this, formManager.openClientBox());
                         dispose();
                         break;
                     case 1:
-                        JOptionPane.showMessageDialog(null,"Wrong password.");
+                        JOptionPane.showMessageDialog(null, "Wrong password.");
                         break;
                     case 2:
-                        JOptionPane.showMessageDialog(null,"Username does not exist.");
+                        JOptionPane.showMessageDialog(null, "Username does not exist.");
                         break;
                     case -1:
-                        JOptionPane.showMessageDialog(null,"Server is offline. Click here to try to reconnect.");
+                        JOptionPane.showMessageDialog(null, "Server is offline. Click here to try to reconnect.");
                         client.connectToServer();
                         break;
 
                     default:
-                        JOptionPane.showMessageDialog(null,"Unknown Exception.");
+                        JOptionPane.showMessageDialog(null, "Unknown Exception.");
 
                 }
             } catch (Exception e1) {
@@ -70,29 +72,29 @@ public class LoginForm extends JFrame {
 
                 int option = JOptionPane.showConfirmDialog(null, message, "Login", JOptionPane.OK_CANCEL_OPTION);
                 if (option == JOptionPane.OK_OPTION) {
-                    if(!password.getText().equals(repeatPassword.getText())){
+                    if (!password.getText().equals(repeatPassword.getText())) {
                         JOptionPane.showMessageDialog(null, "Passwords don't match.");
-                    }else{
-                        switch (client.register(username.getText(), password.getText())){
+                    } else {
+                        switch (client.register(username.getText(), password.getText())) {
                             case 0:
-                                JOptionPane.showMessageDialog(null,username.getText() + " successfully registered.");
+                                JOptionPane.showMessageDialog(null, username.getText() + " successfully registered.");
                                 break;
                             case 1:
-                                JOptionPane.showMessageDialog(null,username.getText() + " already exists.");
+                                JOptionPane.showMessageDialog(null, username.getText() + " already exists.");
                                 break;
                             case 2:
-                                JOptionPane.showMessageDialog(null,"Username must be between 4 and 20 characters long.");
+                                JOptionPane.showMessageDialog(null, "Username must be between 4 and 20 characters long.");
                                 break;
                             case 3:
-                                JOptionPane.showMessageDialog(null,"Password must be between 8 and 64 characters long.");
+                                JOptionPane.showMessageDialog(null, "Password must be between 8 and 64 characters long.");
                                 break;
                             case -1:
-                                JOptionPane.showMessageDialog(null,"Server is offline. Click OK to try to reconnect.");
+                                JOptionPane.showMessageDialog(null, "Server is offline. Click OK to try to reconnect.");
                                 client = new ImplementationClient();
                                 break;
 
                             default:
-                                JOptionPane.showMessageDialog(null,"Unknown Exception.");
+                                JOptionPane.showMessageDialog(null, "Unknown Exception.");
 
                         }
                     }
@@ -115,4 +117,53 @@ public class LoginForm extends JFrame {
 
     }
 
+    {
+// GUI initializer generated by IntelliJ IDEA GUI Designer
+// >>> IMPORTANT!! <<<
+// DO NOT EDIT OR ADD ANY CODE HERE!
+        $$$setupUI$$$();
+    }
+
+    /**
+     * Method generated by IntelliJ IDEA GUI Designer
+     * >>> IMPORTANT!! <<<
+     * DO NOT edit this method OR call it in your code!
+     *
+     * @noinspection ALL
+     */
+    private void $$$setupUI$$$() {
+        loginMainPanel = new JPanel();
+        loginMainPanel.setLayout(new GridLayoutManager(5, 2, new Insets(0, 0, 0, 0), -1, -1));
+        loginMainPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Remote Docs - SIRS"));
+        btn_login = new JButton();
+        btn_login.setText("Login");
+        loginMainPanel.add(btn_login, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        btn_register = new JButton();
+        btn_register.setText("Register");
+        loginMainPanel.add(btn_register, new GridConstraints(3, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        tf_username = new JTextField();
+        tf_username.setText("");
+        tf_username.setToolTipText("Username");
+        loginMainPanel.add(tf_username, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        tf_password = new JPasswordField();
+        tf_password.setText("");
+        tf_password.setToolTipText("Password");
+        loginMainPanel.add(tf_password, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
+        btn_exit = new JButton();
+        btn_exit.setText("Exit");
+        loginMainPanel.add(btn_exit, new GridConstraints(4, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label1 = new JLabel();
+        label1.setText("Username");
+        loginMainPanel.add(label1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label2 = new JLabel();
+        label2.setText("Password");
+        loginMainPanel.add(label2, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    public JComponent $$$getRootComponent$$$() {
+        return loginMainPanel;
+    }
 }

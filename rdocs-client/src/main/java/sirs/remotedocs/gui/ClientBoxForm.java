@@ -1,6 +1,8 @@
 package sirs.remotedocs.gui;
 
 
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
 import sirs.remotedocs.ImplementationClient;
 import types.Document_t;
 
@@ -10,6 +12,7 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -20,7 +23,7 @@ import java.security.NoSuchAlgorithmException;
 import static utils.MiscUtils.getStringArrayFromCollection;
 
 
-public class ClientBoxForm extends JFrame{
+public class ClientBoxForm extends JFrame {
     private JPanel mainPanel;
     private JList<String> ownDocsList;
     private JList<String> sharedDocsList;
@@ -32,7 +35,7 @@ public class ClientBoxForm extends JFrame{
     private JScrollPane ownListScrollPane;
     private JScrollPane sharedListScrollPane;
 
-    public ClientBoxForm(ImplementationClient client, GUIClient formManager){
+    public ClientBoxForm(ImplementationClient client, GUIClient formManager) {
         setContentPane(mainPanel);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
@@ -44,7 +47,7 @@ public class ClientBoxForm extends JFrame{
 
         getSharedDocuments(client);
 
-        javax.swing.Timer timer = new javax.swing.Timer(10000, e -> getSharedDocuments(client));
+        Timer timer = new Timer(10000, e -> getSharedDocuments(client));
         timer.start();
 
 
@@ -59,7 +62,7 @@ public class ClientBoxForm extends JFrame{
         newButton.addActionListener((ActionEvent e) -> {
             openButton.setEnabled(false);
             deleteButton.setEnabled(false);
-            String title = (String)JOptionPane.showInputDialog(
+            String title = (String) JOptionPane.showInputDialog(
                     this,
                     "Document title:",
                     "New document",
@@ -71,8 +74,8 @@ public class ClientBoxForm extends JFrame{
                 return;
             try {
                 Document_t document = client.createDocument(title);
-                while(document==null){
-                    title = (String)JOptionPane.showInputDialog(
+                while (document == null) {
+                    title = (String) JOptionPane.showInputDialog(
                             this,
                             "Document title:",
                             "New document",
@@ -95,9 +98,8 @@ public class ClientBoxForm extends JFrame{
         });
 
 
-
         openButton.addActionListener(e -> {
-            if(ownDocsList.isSelectionEmpty() && sharedDocsList.isSelectionEmpty()) {
+            if (ownDocsList.isSelectionEmpty() && sharedDocsList.isSelectionEmpty()) {
                 openButton.setEnabled(false);
                 deleteButton.setEnabled(false);
                 return;
@@ -107,13 +109,13 @@ public class ClientBoxForm extends JFrame{
             String docOwner;
             SecretKey docKey;
 
-            if(!ownDocsList.isSelectionEmpty()){
+            if (!ownDocsList.isSelectionEmpty()) {
                 isShared = false;
                 docID = ownDocsList.getSelectedValue();
                 docOwner = client.getUsername();
                 docKey = client.getClientBox().getDocumentKey(docID);
 
-            }else{
+            } else {
                 isShared = true;
                 docID = sharedDocsList.getSelectedValue();
                 docOwner = client.getClientBox().getSharedDocumentInfo(docID).getOwner();
@@ -121,14 +123,14 @@ public class ClientBoxForm extends JFrame{
             }
             try {
                 Document_t document = client.downloadDocument(docID, docOwner, docKey);
-                if(document.hasIntegrityFaultFlag())
+                if (document.hasIntegrityFaultFlag())
                     JOptionPane.showMessageDialog(null,
                             docID + "'s hash is not valid.\n" +
                                     "Not allowed user could have tampered the content.",
                             "Document Integrity Compromised",
                             JOptionPane.WARNING_MESSAGE);
 
-                if(document.hasSignatureFaultFlag())
+                if (document.hasSignatureFaultFlag())
                     JOptionPane.showMessageDialog(null,
                             docID + "'s signature is not valid.\n" +
                                     "Not allowed user could have edited the content.",
@@ -141,9 +143,9 @@ public class ClientBoxForm extends JFrame{
             } catch (IllegalArgumentException ex) {
                 ex.printStackTrace();
                 if (isShared) {
-                    JOptionPane.showMessageDialog (this,
-                            "This document ("+ docID + ") was removed by the owner.\n " +
-                                    "Removing " + docID + " from shared documents list." ,
+                    JOptionPane.showMessageDialog(this,
+                            "This document (" + docID + ") was removed by the owner.\n " +
+                                    "Removing " + docID + " from shared documents list.",
                             "Revoked key",
                             JOptionPane.WARNING_MESSAGE);
                     removeSharedDocument(client, docID);
@@ -151,10 +153,10 @@ public class ClientBoxForm extends JFrame{
 
             } catch (NoSuchPaddingException | InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException ex) {
                 ex.printStackTrace();
-                if(isShared){
-                    JOptionPane.showMessageDialog (this,
+                if (isShared) {
+                    JOptionPane.showMessageDialog(this,
                             "Your permission to write " + sharedDocsList.getSelectedValue() + " was revoked. \n" +
-                                    "Removing " + sharedDocsList.getSelectedValue() + " from shared documents list." ,
+                                    "Removing " + sharedDocsList.getSelectedValue() + " from shared documents list.",
                             "Revoked key",
                             JOptionPane.WARNING_MESSAGE);
                     removeSharedDocument(client, sharedDocsList.getSelectedValue());
@@ -176,7 +178,7 @@ public class ClientBoxForm extends JFrame{
             dispose();
         });
 
-        ownDocsList.addListSelectionListener(e->{
+        ownDocsList.addListSelectionListener(e -> {
             openButton.setEnabled(true);
             deleteButton.setEnabled(true);
             sharedDocsList.clearSelection();
@@ -208,7 +210,7 @@ public class ClientBoxForm extends JFrame{
 
     public static void main(String[] args) throws Exception {
         ImplementationClient client = new ImplementationClient();
-        client.login("Hello","helloworld");
+        client.login("Hello", "helloworld");
         ClientBoxForm form = new ClientBoxForm(client, null);
         form.setVisible(true);
 
@@ -216,5 +218,65 @@ public class ClientBoxForm extends JFrame{
     }
 
 
+    {
+// GUI initializer generated by IntelliJ IDEA GUI Designer
+// >>> IMPORTANT!! <<<
+// DO NOT EDIT OR ADD ANY CODE HERE!
+        $$$setupUI$$$();
+    }
 
+    /**
+     * Method generated by IntelliJ IDEA GUI Designer
+     * >>> IMPORTANT!! <<<
+     * DO NOT edit this method OR call it in your code!
+     *
+     * @noinspection ALL
+     */
+    private void $$$setupUI$$$() {
+        mainPanel = new JPanel();
+        mainPanel.setLayout(new GridLayoutManager(2, 2, new Insets(10, 10, 10, 10), -1, -1));
+        mainPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), null));
+        buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 5));
+        mainPanel.add(buttonsPanel, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
+        newButton = new JButton();
+        newButton.setMaximumSize(new Dimension(73, 32));
+        newButton.setMinimumSize(new Dimension(73, 32));
+        newButton.setPreferredSize(new Dimension(73, 32));
+        newButton.setText("New");
+        buttonsPanel.add(newButton);
+        openButton = new JButton();
+        openButton.setMaximumSize(new Dimension(73, 32));
+        openButton.setMinimumSize(new Dimension(73, 32));
+        openButton.setPreferredSize(new Dimension(73, 32));
+        openButton.setText("Open");
+        buttonsPanel.add(openButton);
+        deleteButton = new JButton();
+        deleteButton.setMaximumSize(new Dimension(73, 32));
+        deleteButton.setMinimumSize(new Dimension(73, 32));
+        deleteButton.setPreferredSize(new Dimension(73, 32));
+        deleteButton.setText("Delete");
+        buttonsPanel.add(deleteButton);
+        logoutButton = new JButton();
+        logoutButton.setMaximumSize(new Dimension(73, 32));
+        logoutButton.setMinimumSize(new Dimension(73, 32));
+        logoutButton.setPreferredSize(new Dimension(73, 32));
+        logoutButton.setText("Logout");
+        buttonsPanel.add(logoutButton);
+        ownListScrollPane = new JScrollPane();
+        mainPanel.add(ownListScrollPane, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(100, 200), null, 0, false));
+        ownDocsList = new JList();
+        ownListScrollPane.setViewportView(ownDocsList);
+        sharedListScrollPane = new JScrollPane();
+        mainPanel.add(sharedListScrollPane, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, new Dimension(100, 200), null, 0, false));
+        sharedDocsList = new JList();
+        sharedListScrollPane.setViewportView(sharedDocsList);
+    }
+
+    /**
+     * @noinspection ALL
+     */
+    public JComponent $$$getRootComponent$$$() {
+        return mainPanel;
+    }
 }
