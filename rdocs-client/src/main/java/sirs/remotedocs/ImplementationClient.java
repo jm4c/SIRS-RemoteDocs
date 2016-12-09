@@ -7,7 +7,10 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -16,6 +19,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Properties;
 
 import static utils.CryptoUtils.*;
 import static utils.HashUtils.hash;
@@ -71,7 +75,13 @@ public class ImplementationClient {
     }
 
     public boolean connectToServer() throws Exception{
-        Registry myReg = LocateRegistry.getRegistry("localhost");
+        String server_address;
+
+        Properties props = new Properties();
+        props.load(ImplementationClient.class.getClassLoader().getResourceAsStream("client.properties"));
+        server_address = props.getProperty("server_address");
+
+        Registry myReg = LocateRegistry.getRegistry(server_address);
         server = (InterfaceServer) myReg.lookup("rdocs.Server");
         System.out.println(server.greeting() + "\n");
         return isConnected();
