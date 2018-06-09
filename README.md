@@ -43,3 +43,10 @@ Go back to the login window by clicking "Logout" and register a new user. Login 
 Login again with the first user, and notice the the shared document is now accessible to you.
 
 When you open a shared document, you can see who is the owner (creator) of the document, and also see who made the last edit and when.
+
+
+## Presentation
+
+[Presentation Slides](https://github.com/jm4c/SIRS-RemoteDocs/blob/master/etc/t%2016%20m%201030%201-26%20presentation.pdf)
+
+[Demonstration](https://www.youtube.com/watch?v=6f2IbYMPfDE)
